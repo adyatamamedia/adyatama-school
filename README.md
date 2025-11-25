@@ -1,19 +1,12 @@
-```markdown
 # 🏫 ADYATAMA SCHOOL – Admin Dashboard CMS
-> Framework: CodeIgniter 4  
-> Frontend: Bootstrap 5 (Admin LTE)  
-> Database: MySQL (adyatama_sekolah)  
-> Author: Adyatama Media  
-> License: Internal Development  
 
----
+ADYATAMA SCHOOL adalah **Content Management System (CMS)** untuk lembaga pendidikan berbasis CodeIgniter 4, menggunakan tema **Admin LTE (Bootstrap 5)** sebagai dashboard utama.
 
 ## 🎯 Overview
 
-ADYATAMA SCHOOL adalah **Content Management System (CMS)** untuk lembaga pendidikan berbasis CodeIgniter 4,  
-menggunakan tema **Admin LTE (Bootstrap 5)** sebagai dashboard utama.
+ADYATAMA SCHOOL adalah sistem manajemen konten yang dirancang khusus untuk kebutuhan lembaga pendidikan. Sistem ini menyediakan antarmuka admin yang intuitif untuk mengelola berbagai aspek informasi sekolah secara efisien.
 
-Fitur utama:
+### Fitur Utama
 - Manajemen artikel, kategori, tag, halaman statis
 - Galeri foto/video kegiatan
 - Data guru dan staf
@@ -21,8 +14,6 @@ Fitur utama:
 - Pengaturan web & SEO meta
 - Role-based Access Control (RBAC)
 - Scheduled post & activity log
-
----
 
 ## 🧩 Teknologi
 
@@ -38,163 +29,124 @@ Fitur utama:
 | Scheduler | CI4 CLI Command |
 | Version Control | Git |
 
----
+## 📋 Database Schema
 
-## ⚙️ Database Overview
+Database: `adyatama_sekolah`
+Total Tables: **24**
 
-Database: `adyatama_sekolah`  
-Total Tables: **23**
+### Tabel Utama
+- `users` - Data pengguna sistem
+- `roles` - Peran pengguna dalam sistem
+- `permissions` - Hak akses berdasarkan peran
+- `posts` - Artikel/berita sekolah
+- `categories` - Kategori konten
+- `tags` - Tag untuk pengelompokan konten
+- `media` - File media (gambar, video, dokumen)
 
-Utama: `users`, `roles`, `permissions`, `posts`, `categories`, `tags`  
-Pendukung: `media`, `galleries`, `guru_staff`, `settings`, `seo_overrides`  
-Interaksi: `post_reactions`, `comments`, `post_views`  
-Sistem: `activity_log`, `scheduled_jobs`
+### Tabel Pendukung
+- `galleries` - Album galeri kegiatan
+- `guru_staff` - Data guru dan staf
+- `pages` - Halaman statis (visi, misi, legalitas)
+- `settings` - Pengaturan sistem
+- `seo_overrides` - Pengaturan SEO per halaman
+- `extracurriculars` - Data ekstrakurikuler
 
----
+### Tabel Interaksi
+- `post_reactions` - Reaksi terhadap postingan
+- `comments` - Komentar dari pengunjung
+- `post_views` - Statistik kunjungan
+- `subscribers` - Daftar pelanggan notifikasi
 
-## 🧭 Flow Pembangunan Sistem
+### Tabel Sistem
+- `activity_log` - Log aktivitas pengguna
+- `scheduled_jobs` - Penjadwalan tugas sistem
+- `reaction_types` - Jenis reaksi (like, love, etc.)
 
-### 1️⃣ Setup & Environment
-- Konfigurasi `.env` → koneksi database  
-- Jalankan migrasi dan seed data  
-- Uji route dasar CI4  
-- Buat helper: `setting()`, `user_can()`  
+## ⚙️ Instalasi
 
-### 2️⃣ Auth & RBAC
-- Buat `AuthController` (login/logout)  
-- Implementasi `auth` filter  
-- Seed `roles`, `permissions`, `role_permissions`  
-- Helper `user_can($perm)`  
-- Session berbasis user login  
+### Prasyarat
+- PHP 8.2+
+- MySQL 8+
+- Composer
+- Web server (Apache/Nginx)
 
-### 3️⃣ Layout & Tema Volt
-- Unduh Volt dari Themesberg  
-- Pisahkan layout:  
-  - `admin_header.php`  
-  - `admin_sidebar.php`  
-  - `admin_footer.php`  
-  - `admin_base.php`  
-- Integrasi Chart.js, Volt.js  
-- Tambahkan navbar profile + logout  
+### Langkah-langkah Instalasi
 
-### 4️⃣ Dashboard
-- Controller: `Admin\Dashboard`  
-- Data statistik: total post, total user, recent posts  
-- Chart: views 7 hari terakhir  
+1. Clone atau download repository ini
+2. Masuk ke direktori proyek dan install dependensi:
+   ```bash
+   composer install
+   npm install
+   ```
 
-### 5️⃣ Core Modules
-#### 📄 Posts
-- CRUD (list, create, edit, delete)
-- CKEditor 5
-- Upload featured image
-- Category & tag select (Select2)
-- Auto slug
-- Publish/draft toggle
+3. Salin file `.env.example` menjadi `.env`:
+   ```bash
+   cp .env.example .env
+   ```
 
-#### 🗂 Categories
-- CRUD sederhana  
-- Unique slug validation  
+4. Konfigurasi koneksi database di file `.env`:
+   ```
+   database.default.hostname = localhost
+   database.default.database = adyatama_sekolah
+   database.default.username = root
+   database.default.password = 
+   ```
 
-#### 🏷 Tags
-- CRUD sederhana atau inline pada post  
+5. Jalankan migrasi database:
+   ```bash
+   php spark migrate
+   ```
 
-#### 🖼 Media
-- Upload file (gambar, video, dokumen)
-- Auto-generate variant (thumb, medium)
-- Modal selector (featured image)
+6. Jalankan seeder untuk data awal:
+   ```bash
+   php spark db:seed
+   ```
 
----
+7. Jalankan server pengembangan:
+   ```bash
+   php spark serve
+   ```
 
-### 6️⃣ Supporting Modules
-#### 🖼 Galleries
-- CRUD + upload multiple image  
-- Sorting via drag-drop  
-- Relasi ke `extracurriculars`
+## 🔐 Autentikasi & Hak Akses
 
-#### 👨‍🏫 Guru-Staff
-- CRUD + upload foto  
-- Link opsional ke `users`  
-- Filter `guru` / `staff`
+Sistem menggunakan Role-Based Access Control (RBAC) untuk mengatur hak akses pengguna:
+- Super Admin: Akses penuh ke semua fitur
+- Admin: Akses ke manajemen konten dan pengguna
+- Editor: Akses ke manajemen artikel dan media
+- Kontributor: Hanya bisa membuat dan mengedit konten sendiri
 
-#### 📄 Pages
-- CRUD halaman statis (visi misi, legalitas)
-- Editor long text  
+## 📝 Penggunaan
 
-#### ⚙ Settings
-- CRUD key/value
-- Group by: `general`, `contact`, `seo`
-- Cache hasil setelah update  
+### Dashboard Admin
+Dashboard menyediakan ringkasan statistik penting:
+- Jumlah postingan terbaru
+- Jumlah pengguna terdaftar
+- Grafik kunjungan harian
+- Aktivitas terbaru dalam sistem
 
-#### 🔍 SEO Overrides
-- CRUD meta per post/page  
-- Meta title, desc, keywords, canonical  
+### Manajemen Konten
+- **Artikel**: Buat, edit, dan publikasikan artikel dengan editor rich-text
+- **Kategori**: Kelompokkan artikel berdasarkan topik
+- **Media**: Unggah dan atur file media untuk digunakan dalam konten
+- **Galeri**: Kelola album foto dan video kegiatan sekolah
 
----
+### Pengaturan Sistem
+- Pengaturan umum (nama sekolah, alamat, kontak)
+- Pengaturan SEO (meta tag, deskripsi, kata kunci)
+- Manajemen pengguna dan hak akses
 
-### 7️⃣ Engagement
-#### 😍 Reactions
-- Tabel: `reaction_types`, `post_reactions`, `post_reaction_counts`  
-- Endpoint `/api/posts/{id}/react`  
-- Update count via AJAX  
+## 🚀 Deployment
 
-#### 💬 Comments
-- CRUD komentar (frontend)  
-- Moderasi di admin  
+Untuk deployment ke production:
+1. Pastikan konfigurasi `.env` sesuai dengan server production
+2. Jalankan perintah minifikasi asset:
+   ```bash
+   npm run production
+   ```
+3. Set hak akses folder `writable` dan `public/uploads` ke mode tulis
+4. Konfigurasi cron job untuk penjadwalan postingan otomatis
 
-#### 📈 Views
-- Middleware untuk logging  
-- Statistik di dashboard  
-
----
-
-### 8️⃣ System Modules
-#### 🧾 Activity Log
-- Catat aksi user (login, CRUD, delete)
-- View log di admin  
-
-#### ⏰ Scheduler
-- Command: `php spark publish:scheduled`
-- Cron setiap menit
-- Otomatis publish post jika waktunya tiba  
-
----
-
-### 9️⃣ Testing & Deployment
-- Tes login & permission
-- Validasi semua CRUD
-- Tes upload media
-- Tes scheduler (auto publish)
-- Minify asset (volt.css/js)
-- Uji mobile responsive
-- Deploy ke hosting / subdomain
-
----
-
-## ✅ To-Do Summary
-
-| Modul | Status | Catatan |
-|--------|---------|----------|
-| Setup | ⬜ | Env + DB |
-| Auth | ⬜ | RBAC Filter |
-| Layout | ⬜ | Volt Integration |
-| Dashboard | ⬜ | Statistik |
-| Posts | ⬜ | CRUD |
-| Categories | ⬜ | CRUD |
-| Media | ⬜ | Upload |
-| Galleries | ⬜ | Multi Image |
-| Guru-Staff | ⬜ | CRUD |
-| Pages | ⬜ | CRUD |
-| Settings | ⬜ | CRUD |
-| SEO | ⬜ | Meta |
-| Reactions | ⬜ | API |
-| Comments | ⬜ | Moderasi |
-| Views | ⬜ | Statistik |
-| Activity Log | ⬜ | Tracking |
-| Scheduler | ⬜ | Cron job |
-
----
-
-## 📅 Timeline (Rekomendasi)
+## 📅 Timeline Pengembangan
 
 | Minggu | Fokus | Target |
 |--------|--------|--------|
@@ -206,47 +158,6 @@ Sistem: `activity_log`, `scheduled_jobs`
 | 6 | SEO + Reactions + Log | Optimasi |
 | 7 | Testing & Deploy | Finalisasi |
 
----
-
-## 📁 Folder Struktur
-
-```
-
-/app
-/Controllers
-/Admin
-Dashboard.php
-Posts.php
-Galleries.php
-Settings.php
-Auth.php
-/Models
-PostModel.php
-CategoryModel.php
-TagModel.php
-MediaModel.php
-/Views
-/layout
-admin_header.php
-admin_sidebar.php
-admin_footer.php
-admin_base.php
-/admin
-dashboard.php
-posts/
-galleries/
-pages/
-settings/
-/public
-/assets/volt/
-/uploads/
-
-```
-
----
-
-## 📜 License
-- Project: ADYATAMA SCHOOL (© Adyatama Media)  
-- Theme: Admin LTE – MIT License by Themesberg  
-
----
+## 📄 License
+- Project: ADYATAMA SCHOOL (© Adyatama Media)
+- Theme: Admin LTE – MIT License by Themesberg
