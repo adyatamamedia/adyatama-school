@@ -1,0 +1,553 @@
+[
+  {
+    "id": "TC001",
+    "title": "Valid User Login with Role-Based Access",
+    "description": "Verify that a user can log in with valid credentials and is granted access according to assigned role permissions.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page."
+      },
+      {
+        "type": "action",
+        "description": "Enter valid username/email and password."
+      },
+      {
+        "type": "action",
+        "description": "Click the login button."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify login success and redirection to the dashboard."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user interface elements and module access correspond to the role permissions."
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Invalid Login Attempts Handling",
+    "description": "Verify the system properly handles invalid login attempts and prevents access.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page."
+      },
+      {
+        "type": "action",
+        "description": "Enter incorrect username/email and password combinations."
+      },
+      {
+        "type": "action",
+        "description": "Click the login button."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that login is denied and appropriate error message is displayed."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to access a protected URL without authentication."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is blocked and user is redirected to login."
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Dashboard Statistics Accuracy",
+    "description": "Verify that dashboard statistics for posts, users, views, and recent activity are accurate and reflect current database content.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as admin user."
+      },
+      {
+        "type": "action",
+        "description": "Navigate to admin dashboard."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that posts count matches the number of posts in the database."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that user count matches registered users."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify views and recent activity data are displayed and updated."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify chart visualizations render correctly with appropriate data."
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Create, Read, Update, Delete (CRUD) Post with SEO and Media",
+    "description": "Verify that posts can be created, edited, viewed, and deleted correctly, including rich text content, SEO metadata, and media attachments.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as content creator or admin."
+      },
+      {
+        "type": "action",
+        "description": "Navigate to posts management."
+      },
+      {
+        "type": "action",
+        "description": "Create a new post with title, rich text content via CKEditor 5, SEO fields, and upload media."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the post is saved and visible in the posts list."
+      },
+      {
+        "type": "action",
+        "description": "View the post details."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that SEO metadata is present in page source."
+      },
+      {
+        "type": "action",
+        "description": "Edit the post content and update SEO settings."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updates are saved and reflected correctly."
+      },
+      {
+        "type": "action",
+        "description": "Delete the post."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the post is removed from the system."
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Category Management with Unique Slugs",
+    "description": "Verify creation, editing, and deletion of post categories ensuring unique slug enforcement and proper inline tag editing.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to categories management."
+      },
+      {
+        "type": "action",
+        "description": "Create a new category with a unique name and slug."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify category is created and displayed."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to create another category with duplicate slug."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system prevents creation and shows appropriate error."
+      },
+      {
+        "type": "action",
+        "description": "Edit an existing category's slug to another existing slug."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify editing is blocked and error is shown."
+      },
+      {
+        "type": "action",
+        "description": "Use inline editing to update tags."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify tags update correctly and persist."
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Media Upload and Thumbnail Generation",
+    "description": "Verify uploading various media file types, validations, automatic thumbnail creation, and media management features.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to media library."
+      },
+      {
+        "type": "action",
+        "description": "Upload valid image files (jpg, png, gif)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify uploads succeed and thumbnails are generated."
+      },
+      {
+        "type": "action",
+        "description": "Upload unsupported file type (e.g., exe, large-size > limit)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify upload is rejected with proper error messages."
+      },
+      {
+        "type": "action",
+        "description": "Delete a media file."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify media is removed from library and references."
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Guru & Staff Data CRUD with Role Filtering",
+    "description": "Verify creation, editing, listing, filtering by roles, and deletion of school personnel including photo upload.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Guru & Staff module."
+      },
+      {
+        "type": "action",
+        "description": "Create a new personnel record with photo and role."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify record is saved and displayed with photo."
+      },
+      {
+        "type": "action",
+        "description": "Update personnel information."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify changes persist correctly."
+      },
+      {
+        "type": "action",
+        "description": "Use role filter to list personnel by role."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify filtered results correspond to selected role."
+      },
+      {
+        "type": "action",
+        "description": "Delete personnel record."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify record is removed from the system."
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Static Pages with SEO Metadata",
+    "description": "Test CRUD operations on static pages with SEO metadata editing and verify accurate metadata rendering.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to static pages module."
+      },
+      {
+        "type": "action",
+        "description": "Create a new static page with content and SEO meta fields."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify page is listed and accessible."
+      },
+      {
+        "type": "action",
+        "description": "View static page and check HTML metadata tags."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify SEO metadata is rendered correctly in the page source."
+      },
+      {
+        "type": "action",
+        "description": "Edit and update static page metadata."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify changes are saved and reflected."
+      },
+      {
+        "type": "action",
+        "description": "Delete static page."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm page removal from system."
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Gallery and Album Management with Drag-and-Drop Sorting",
+    "description": "Verify adding, editing, deleting galleries and gallery items, and reordering photos/videos by drag-and-drop.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to galleries management."
+      },
+      {
+        "type": "action",
+        "description": "Create a new gallery album."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify album is saved and shown in the list."
+      },
+      {
+        "type": "action",
+        "description": "Add photos/videos to the gallery."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify items appear within the gallery."
+      },
+      {
+        "type": "action",
+        "description": "Reorder gallery items using drag-and-drop interface."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new order is persisted and reflected."
+      },
+      {
+        "type": "action",
+        "description": "Delete gallery items and galleries."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify items and galleries are properly removed."
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "System Settings Persistence and Cache Invalidation",
+    "description": "Verify that changes made in the system settings panel are saved, cached properly, and immediately affect application behavior.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to system settings panel."
+      },
+      {
+        "type": "action",
+        "description": "Update general, contact, and SEO settings."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify changes are saved successfully."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that settings cache is refreshed or invalidated."
+      },
+      {
+        "type": "action",
+        "description": "Visit relevant front-end pages to confirm updated settings impact (e.g., site name, SEO metadata)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify application behavior reflects new settings immediately."
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "User Engagement: Reactions API and Comment Moderation",
+    "description": "Test asynchronous reaction API endpoints for updating counts and the comment moderation interface allowing approve, edit, and delete actions with immediate UI feedback.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Perform a reaction (like/dislike/etc) via API endpoint."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify reaction count updates asynchronously in UI."
+      },
+      {
+        "type": "action",
+        "description": "Log in as moderator and navigate to comment moderation panel."
+      },
+      {
+        "type": "action",
+        "description": "Approve a pending comment."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify comment status updates and UI reflects approval instantly."
+      },
+      {
+        "type": "action",
+        "description": "Edit a comment's content via moderation."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify edited content is saved and displayed correctly."
+      },
+      {
+        "type": "action",
+        "description": "Delete a comment."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm comment removal and UI update without page reload."
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Activity Log Recording and Display",
+    "description": "Verify activity logs capture all user actions such as login, content CRUD operations with accurate timestamps and user identification, and display correctly in the admin panel.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Perform various user actions: login, create/edit/delete posts, categories, comments."
+      },
+      {
+        "type": "action",
+        "description": "Navigate to activity log interface."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify logs list actions with correct user, timestamps, and descriptions."
+      },
+      {
+        "type": "action",
+        "description": "Apply filters or search activity logs."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify filtering and search return accurate results."
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Scheduled Publishing via CLI and Cron",
+    "description": "Test that scheduled posts are published automatically at configured times when running the CLI command simulating cron job execution.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create posts with future publish dates."
+      },
+      {
+        "type": "action",
+        "description": "Manually trigger the scheduled publishing CLI command simulating cron execution."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify posts scheduled for current time or earlier are published."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify posts scheduled for future time remain unpublished."
+      },
+      {
+        "type": "action",
+        "description": "Repeat CLI command after advancing time to next scheduled post."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the newly due posts are published appropriately."
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Role-Based UI Access Restrictions",
+    "description": "Verify that UI elements and modules are hidden or disabled according to user role permissions to restrict unauthorized access.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as a user with limited permissions."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that navigation and UI components for unauthorized modules are not visible or accessible."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to access restricted module URL directly."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is denied with appropriate error or redirect."
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Responsive UI Across Supported Browsers and Screen Sizes",
+    "description": "Verify that the admin dashboard and all modules render and function correctly across supported desktop and mobile browsers and different screen resolutions.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open admin dashboard in major browsers (Chrome, Firefox, Edge, Safari) on desktop."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify layout, controls, and responsiveness function correctly."
+      },
+      {
+        "type": "action",
+        "description": "Simulate various screen sizes including mobile widths."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify UI adapts properly without content overlap or cutoff."
+      }
+    ]
+  }
+]
