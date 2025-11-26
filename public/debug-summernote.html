@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summernote Debug Test</title>
+
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/dash/assets/vendor/summernote/css/summernote-bs5.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            padding: 20px;
+        }
+        .debug-info {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        /* Ensure Summernote is clickable */
+        .note-editor * {
+            pointer-events: auto !important;
+        }
+
+        .note-editor .note-editable {
+            cursor: text !important;
+        }
+
+        .note-editor .note-btn {
+            cursor: pointer !important;
+        }
+
+        .note-editor .note-dropdown-menu {
+            z-index: 99999 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Summernote Debug Test</h1>
+
+        <div class="debug-info">
+            <h5>Debug Information:</h5>
+            <div id="debug-info">Loading...</div>
+        </div>
+
+        <div class="form-group">
+            <label for="summernote">Test Summernote Editor:</label>
+            <textarea id="summernote" class="form-control" name="content">Hello, this is a test content for Summernote!</textarea>
+        </div>
+
+        <div class="mt-3">
+            <button class="btn btn-primary" onclick="testSummernote()">Test Summernote API</button>
+            <button class="btn btn-success" onclick="getContent()">Get Content</button>
+            <button class="btn btn-info" onclick="setContent()">Set Content</button>
+            <button class="btn btn-warning" onclick="destroySummernote()">Destroy</button>
+            <button class="btn btn-secondary" onclick="initSummernote()">Init Again</button>
+        </div>
+
+        <div class="mt-4">
+            <h5>Output:</h5>
+            <pre id="output" class="border p-3 bg-light"></pre>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/dash/assets/vendor/summernote/js/summernote-bs5.min.js"></script>
+
+    <script>
+        // Debug function to check dependencies
+        function checkDependencies() {
+            const debugInfo = [];
+
+            debugInfo.push('jQuery: ' + (typeof $ !== 'undefined' ? '✓ LOADED (v' + $.fn.jquery + ')' : '✗ NOT LOADED'));
+            debugInfo.push('Bootstrap: ' + (typeof bootstrap !== 'undefined' ? '✓ LOADED' : '✗ NOT LOADED'));
+            debugInfo.push('Summernote: ' + (typeof $.fn.summernote !== 'undefined' ? '✓ LOADED' : '✗ NOT LOADED'));
+            debugInfo.push('Textarea found: ' + ($('#summernote').length > 0 ? '✓ FOUND' : '✗ NOT FOUND'));
+            debugInfo.push('Textarea classes: ' + $('#summernote').attr('class'));
+
+            $('#debug-info').html('<ul><li>' + debugInfo.join('</li><li>') + '</li></ul>');
+        }
+
+        // Initialize Summernote
+        function initSummernote() {
+            console.log('Initializing Summernote...');
+
+            if (typeof $ === 'undefined') {
+                console.error('jQuery not loaded!');
+                return;
+            }
+
+            if (typeof $.fn.summernote === 'undefined') {
+                console.error('Summernote not loaded!');
+                return;
+            }
+
+            $('#summernote').summernote({
+                height: 300,
+                placeholder: 'Write something...',
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'italic', 'underline']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['insert', ['link', 'picture']],
+                    ['view', ['fullscreen', 'codeview']]
+                ],
+                callbacks: {
+                    onInit: function() {
+                        console.log('Summernote initialized successfully');
+                        updateOutput('✓ Summernote initialized successfully');
+                    },
+                    onBlur: function() {
+                        console.log('Summernote blurred');
+                    },
+                    onChange: function(contents, $editable) {
+                        console.log('Content changed');
+                    }
+                }
+            });
+        }
+
+        // Test Summernote API
+        function testSummernote() {
+            if (!$('#summernote').summernote('codeview.isActive')) {
+                updateOutput('✓ Summernote is active and working');
+
+                // Test basic operations
+                const editor = $('#summernote').summernote('editor');
+                if (editor) {
+                    updateOutput('✓ Editor object accessible');
+                }
+
+                const isFocus = $('#summernote').summernote('hasFocus');
+                updateOutput('✓ Focus status: ' + isFocus);
+
+            } else {
+                updateOutput('✗ Summernote not active');
+            }
+        }
+
+        // Get content
+        function getContent() {
+            const content = $('#summernote').summernote('code');
+            updateOutput('Content:\n' + content);
+        }
+
+        // Set content
+        function setContent() {
+            $('#summernote').summernote('code', '<p><strong>New content set via API!</strong></p>');
+            updateOutput('✓ Content updated via API');
+        }
+
+        // Destroy Summernote
+        function destroySummernote() {
+            $('#summernote').summernote('destroy');
+            updateOutput('✓ Summernote destroyed');
+        }
+
+        // Update output
+        function updateOutput(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            $('#output').prepend(`[${timestamp}] ${message}\n`);
+        }
+
+        // Initialize on document ready
+        $(document).ready(function() {
+            console.log('Document ready');
+            checkDependencies();
+
+            // Wait a moment for all dependencies
+            setTimeout(function() {
+                initSummernote();
+            }, 500);
+        });
+
+        // Re-check dependencies periodically
+        setInterval(checkDependencies, 2000);
+    </script>
+</body>
+</html>

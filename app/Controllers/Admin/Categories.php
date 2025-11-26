@@ -16,9 +16,62 @@ class Categories extends BaseController
 
     public function index()
     {
+        // Get query parameters
+        $perPage = $this->request->getGet('per_page') ?? 25;
+        $sortBy = $this->request->getGet('sort') ?? 'name_asc';
+        $search = $this->request->getGet('search') ?? '';
+        
+        // Build query
+        $builder = $this->categoryModel;
+        
+        // Apply search
+        if ($search) {
+            $builder->groupStart()
+                ->like('name', $search)
+                ->orLike('slug', $search)
+                ->orLike('description', $search)
+                ->groupEnd();
+        }
+        
+        // Apply sorting
+        switch ($sortBy) {
+            case 'name_desc':
+                $builder->orderBy('name', 'DESC');
+                break;
+            case 'newest':
+                $builder->orderBy('created_at', 'DESC');
+                break;
+            case 'oldest':
+                $builder->orderBy('created_at', 'ASC');
+                break;
+            case 'name_asc':
+            default:
+                $builder->orderBy('name', 'ASC');
+                break;
+        }
+        
         $data = [
             'title' => 'Manage Categories',
-            'categories' => $this->categoryModel->findAll()
+            'categories' => $builder->paginate($perPage, 'default'),
+            'pager' => $builder->pager,
+            'perPage' => $perPage,
+            'sortBy' => $sortBy,
+            'search' => $search,
+            'sortOptions' => [
+                'name_asc' => 'Nama A-Z',
+                'name_desc' => 'Nama Z-A',
+                'newest' => 'Terbaru',
+                'oldest' => 'Terlama'
+            ],
+            'enableBulkActions' => true,
+            'bulkActions' => [
+                ['action' => 'delete', 'label' => 'Hapus', 'icon' => 'trash', 'variant' => 'danger', 'confirm' => 'Hapus kategori terpilih?']
+            ],
+            'createButton' => [
+                'url' => '#',
+                'label' => 'Buat Kategori',
+                'modal' => 'createCategoryModal'
+            ]
         ];
 
         return view('admin/categories/index', $data);
@@ -107,5 +160,23 @@ class Categories extends BaseController
     {
         $this->categoryModel->delete($id);
         return redirect()->to('/dashboard/categories')->with('message', 'Category deleted successfully.');
+    }
+
+    public function bulkDelete()
+    {
+        $ids = $this->request->getPost('ids');
+
+        if (!$ids || !is_array($ids)) {
+            return redirect()->back()->with('error', 'No categories selected.');
+        }
+
+        $count = 0;
+        foreach ($ids as $id) {
+            if ($this->categoryModel->delete($id)) {
+                $count++;
+            }
+        }
+
+        return redirect()->to('/dashboard/categories')->with('message', "$count categor(ies) deleted successfully.");
     }
 }

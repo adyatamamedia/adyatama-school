@@ -1,10 +1,6 @@
 <?= $this->extend('layout/admin_base') ?>
 
 <?= $this->section('content') ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Edit Category</h1>
-    <a href="<?= base_url('dashboard/categories') ?>" class="btn btn-secondary shadow-sm">Back</a>
-</div>
 
 <div class="row justify-content-center">
     <div class="col-lg-6">

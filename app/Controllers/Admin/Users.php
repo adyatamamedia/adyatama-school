@@ -19,12 +19,68 @@ class Users extends BaseController
 
     public function index()
     {
+        // Get query parameters
+        $perPage = $this->request->getGet('per_page') ?? 25;
+        $sortBy = $this->request->getGet('sort') ?? 'newest';
+        $search = $this->request->getGet('search') ?? '';
+        
+        // Build query
+        $builder = $this->userModel
+            ->select('users.*, roles.name as role_name')
+            ->join('roles', 'roles.id = users.role_id', 'left');
+        
+        // Apply search
+        if ($search) {
+            $builder->groupStart()
+                ->like('users.fullname', $search)
+                ->orLike('users.email', $search)
+                ->orLike('users.username', $search)
+                ->orLike('roles.name', $search)
+                ->groupEnd();
+        }
+        
+        // Apply sorting
+        switch ($sortBy) {
+            case 'oldest':
+                $builder->orderBy('users.created_at', 'ASC');
+                break;
+            case 'name_asc':
+                $builder->orderBy('users.fullname', 'ASC');
+                break;
+            case 'name_desc':
+                $builder->orderBy('users.fullname', 'DESC');
+                break;
+            case 'role':
+                $builder->orderBy('roles.name', 'ASC');
+                break;
+            case 'newest':
+            default:
+                $builder->orderBy('users.created_at', 'DESC');
+                break;
+        }
+        
         $data = [
             'title' => 'Manage Users',
-            'users' => $this->userModel
-                ->select('users.*, roles.name as role_name')
-                ->join('roles', 'roles.id = users.role_id', 'left')
-                ->findAll()
+            'users' => $builder->paginate($perPage, 'default'),
+            'pager' => $builder->pager,
+            'perPage' => $perPage,
+            'sortBy' => $sortBy,
+            'search' => $search,
+            'sortOptions' => [
+                'newest' => 'Terbaru',
+                'oldest' => 'Terlama',
+                'name_asc' => 'Nama A-Z',
+                'name_desc' => 'Nama Z-A',
+                'role' => 'Role'
+            ],
+            'enableBulkActions' => true,
+            'bulkActions' => [
+                ['action' => 'delete', 'label' => 'Hapus', 'icon' => 'trash', 'variant' => 'danger', 'confirm' => 'Hapus user terpilih?']
+            ],
+            'createButton' => [
+                'url' => base_url('dashboard/users/new'),
+                'label' => 'Buat User'
+            ]
         ];
 
         return view('admin/users/index', $data);
@@ -124,5 +180,35 @@ class Users extends BaseController
         
         $this->userModel->delete($id);
         return redirect()->to('/dashboard/users')->with('message', 'User deleted successfully.');
+    }
+
+    public function bulkDelete()
+    {
+        $ids = $this->request->getPost('ids');
+
+        if (!$ids || !is_array($ids)) {
+            return redirect()->back()->with('error', 'No users selected.');
+        }
+
+        $currentUserId = current_user()->id;
+        $count = 0;
+        $skipped = 0;
+
+        foreach ($ids as $id) {
+            if ($id == $currentUserId) {
+                $skipped++;
+                continue; // Skip current user
+            }
+            if ($this->userModel->delete($id)) {
+                $count++;
+            }
+        }
+
+        $message = "$count user(s) deleted successfully.";
+        if ($skipped > 0) {
+            $message .= " ($skipped skipped - cannot delete yourself)";
+        }
+
+        return redirect()->to('/dashboard/users')->with('message', $message);
     }
 }

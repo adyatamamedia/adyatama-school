@@ -16,21 +16,64 @@ class Tags extends BaseController
 
     public function index()
     {
-        // Group by name since tags are per-post in schema
-        // In a normalized schema, tags would be a separate table + pivot.
-        // Here 'tags' table has 'post_id'. This means one tag row per post.
-        // So listing unique tags requires grouping.
+        // Get query parameters
+        $perPage = $this->request->getGet('per_page') ?? 25;
+        $sortBy = $this->request->getGet('sort') ?? 'count_desc';
+        $search = $this->request->getGet('search') ?? '';
         
-        // DB Schema: id, post_id, name, slug.
-        // This schema implies a tag is strictly bound to a post.
-        // To manage "Tags" generally, we can list unique tag names used across posts.
+        // Build query - Group by name since tags are per-post in schema
+        $builder = $this->tagModel->select('name, slug, COUNT(id) as count, MAX(created_at) as latest_use')
+                                  ->groupBy('name, slug');
+        
+        // Apply search
+        if ($search) {
+            $builder->having('name LIKE', "%{$search}%")
+                    ->orHaving('slug LIKE', "%{$search}%");
+        }
+        
+        // Apply sorting
+        switch ($sortBy) {
+            case 'count_asc':
+                $builder->orderBy('count', 'ASC');
+                break;
+            case 'name_asc':
+                $builder->orderBy('name', 'ASC');
+                break;
+            case 'name_desc':
+                $builder->orderBy('name', 'DESC');
+                break;
+            case 'newest':
+                $builder->orderBy('latest_use', 'DESC');
+                break;
+            case 'oldest':
+                $builder->orderBy('latest_use', 'ASC');
+                break;
+            case 'count_desc':
+            default:
+                $builder->orderBy('count', 'DESC');
+                break;
+        }
         
         $data = [
             'title' => 'Tags Overview',
-            'tags' => $this->tagModel->select('name, slug, COUNT(id) as count')
-                                     ->groupBy('name, slug')
-                                     ->orderBy('count', 'DESC')
-                                     ->findAll()
+            'tags' => $builder->paginate($perPage, 'default'),
+            'pager' => $builder->pager,
+            'perPage' => $perPage,
+            'sortBy' => $sortBy,
+            'search' => $search,
+            'sortOptions' => [
+                'count_desc' => 'Paling Banyak Digunakan',
+                'count_asc' => 'Paling Sedikit Digunakan',
+                'name_asc' => 'Nama A-Z',
+                'name_desc' => 'Nama Z-A',
+                'newest' => 'Terakhir Digunakan',
+                'oldest' => 'Pertama Digunakan'
+            ],
+            'enableBulkActions' => true,
+            'bulkActions' => [
+                ['action' => 'delete', 'label' => 'Hapus', 'icon' => 'trash', 'variant' => 'danger', 'confirm' => 'Hapus tag dari semua post?']
+            ],
+            'createButton' => false // Tags are created via posts
         ];
 
         return view('admin/tags/index', $data);
@@ -42,5 +85,24 @@ class Tags extends BaseController
     {
         $this->tagModel->where('slug', $slug)->delete();
         return redirect()->to('/dashboard/tags')->with('message', 'Tag usage removed from all posts.');
+    }
+
+    public function bulkDelete()
+    {
+        $slugs = $this->request->getPost('ids'); // ids here = slugs
+
+        if (!$slugs || !is_array($slugs)) {
+            return redirect()->back()->with('error', 'No tags selected.');
+        }
+
+        $count = 0;
+        foreach ($slugs as $slug) {
+            $deleted = $this->tagModel->where('slug', $slug)->delete();
+            if ($deleted) {
+                $count++;
+            }
+        }
+
+        return redirect()->to('/dashboard/tags')->with('message', "$count tag(s) removed from all posts.");
     }
 }

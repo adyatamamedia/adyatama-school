@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Summernote Test - Updated</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/vendor/summernote/css/summernote-lite.min.css" rel="stylesheet">
+    <style>
+        /* Fix dropdown issues similar to admin_base.php */
+        .note-editor .dropdown-toggle::after {
+            display: none !important;
+        }
+        .note-editor .dropdown-menu {
+            position: absolute !important;
+            z-index: 1060 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Summernote Test - Updated Version</h2>
+        <div class="alert alert-info">
+            <strong>Test Features:</strong>
+            <ul class="mb-0">
+                <li>Basic text editing (bold, italic, underline)</li>
+                <li>Image upload functionality</li>
+                <li>Link insertion</li>
+                <li>Table creation</li>
+                <li>Color and font styling</li>
+            </ul>
+        </div>
+
+        <form id="testForm">
+            <div class="mb-3">
+                <label for="summernote" class="form-label">Content</label>
+                <textarea id="summernote" name="content" class="form-control"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="button" class="btn btn-secondary" onclick="getContent()">Get Content</button>
+            <button type="button" class="btn btn-info" onclick="resetContent()">Reset</button>
+        </form>
+
+        <div class="mt-4">
+            <h4>Output:</h4>
+            <div id="output" class="border p-3 bg-light"></div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/vendor/summernote/js/summernote-lite.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Initialize Summernote with updated configuration
+            $('#summernote').summernote({
+                height: 300,
+                minHeight: 200,
+                focus: false,
+                placeholder: 'Write something amazing...',
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'italic', 'underline', 'clear']],
+                    ['fontname', ['fontname']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['table', ['table']],
+                    ['insert', ['link', 'picture', 'video']],
+                    ['view', ['fullscreen', 'codeview', 'help']]
+                ],
+                callbacks: {
+                    onInit: function() {
+                        console.log('Summernote initialized successfully');
+                        $('.note-editor').addClass('summernote-initialized');
+                    },
+                    onBlur: function() {
+                        // Auto-save functionality could be added here
+                        console.log('Editor blurred');
+                    },
+                    onChange: function(contents, $editable) {
+                        // Real-time preview could be added here
+                        console.log('Content changed');
+                    },
+                    onImageUpload: function(files) {
+                        // Test image upload - this would normally go to your server
+                        uploadImage(files[0]);
+                    }
+                }
+            });
+
+            console.log('Summernote setup complete');
+        });
+
+        // Image upload function (simulated)
+        function uploadImage(file) {
+            // In production, this would be an AJAX call to your server
+            // For now, we'll just create a file reader to preview
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $('#summernote').summernote('insertImage', e.target.result, function($image) {
+                    $image.attr('alt', 'Test image');
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Get content function
+        function getContent() {
+            var content = $('#summernote').summernote('code');
+            $('#output').html(content);
+        }
+
+        // Reset content function
+        function resetContent() {
+            $('#summernote').summernote('reset');
+            $('#output').html('');
+        }
+
+        // Form submission
+        $('#testForm').on('submit', function(e) {
+            e.preventDefault();
+            getContent();
+        });
+    </script>
+</body>
+</html>

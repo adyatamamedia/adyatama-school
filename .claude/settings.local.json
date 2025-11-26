@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php spark:*)",
+      "Bash(php:*)",
+      "Bash(find:*)",
+      "Bash(dir \"C:\\xampp\\htdocs\\adyatama-school\\dash\\public\\assets\\vendor\\summernote\\js\")",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

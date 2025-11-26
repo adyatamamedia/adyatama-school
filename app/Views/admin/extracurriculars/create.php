@@ -1,10 +1,7 @@
 <?= $this->extend('layout/admin_base') ?>
 
 <?= $this->section('content') ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Add Extracurricular</h1>
-    <a href="<?= base_url('dashboard/extracurriculars') ?>" class="btn btn-secondary shadow-sm">Back</a>
-</div>
+
 
 <div class="row justify-content-center">
     <div class="col-lg-6">

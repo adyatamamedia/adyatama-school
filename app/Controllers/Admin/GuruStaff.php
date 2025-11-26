@@ -16,9 +16,65 @@ class GuruStaff extends BaseController
 
     public function index()
     {
+        // Get query parameters
+        $perPage = $this->request->getGet('per_page') ?? 25;
+        $sortBy = $this->request->getGet('sort') ?? 'name_asc';
+        $search = $this->request->getGet('search') ?? '';
+        
+        // Build query
+        $builder = $this->guruStaffModel;
+        
+        // Apply search
+        if ($search) {
+            $builder->groupStart()
+                ->like('nama_lengkap', $search)
+                ->orLike('posisi', $search)
+                ->orLike('email', $search)
+                ->groupEnd();
+        }
+        
+        // Apply sorting
+        switch ($sortBy) {
+            case 'name_desc':
+                $builder->orderBy('nama_lengkap', 'DESC');
+                break;
+            case 'position':
+                $builder->orderBy('posisi', 'ASC');
+                break;
+            case 'newest':
+                $builder->orderBy('created_at', 'DESC');
+                break;
+            case 'oldest':
+                $builder->orderBy('created_at', 'ASC');
+                break;
+            case 'name_asc':
+            default:
+                $builder->orderBy('nama_lengkap', 'ASC');
+                break;
+        }
+        
         $data = [
             'title' => 'Guru & Staff',
-            'staff_list' => $this->guruStaffModel->orderBy('nama_lengkap', 'ASC')->findAll()
+            'staff_list' => $builder->paginate($perPage, 'default'),
+            'pager' => $builder->pager,
+            'perPage' => $perPage,
+            'sortBy' => $sortBy,
+            'search' => $search,
+            'sortOptions' => [
+                'name_asc' => 'Nama A-Z',
+                'name_desc' => 'Nama Z-A',
+                'position' => 'Posisi',
+                'newest' => 'Terbaru',
+                'oldest' => 'Terlama'
+            ],
+            'enableBulkActions' => true,
+            'bulkActions' => [
+                ['action' => 'delete', 'label' => 'Hapus', 'icon' => 'trash', 'variant' => 'danger', 'confirm' => 'Hapus guru/staff terpilih?']
+            ],
+            'createButton' => [
+                'url' => base_url('dashboard/guru-staff/new'),
+                'label' => 'Tambah Guru/Staff'
+            ]
         ];
 
         return view('admin/guru_staff/index', $data);
@@ -34,9 +90,12 @@ class GuruStaff extends BaseController
     {
         $rules = [
             'nama_lengkap' => 'required|min_length[3]|max_length[150]',
+            'jabatan' => 'required|max_length[100]',
+            'bidang' => 'required|max_length[100]',
             'status' => 'required|in_list[guru,staff]',
             'email' => 'permit_empty|valid_email',
             'foto' => 'permit_empty|max_length[255]',
+            'bio' => 'permit_empty',
         ];
 
         if (! $this->validate($rules)) {
@@ -50,6 +109,7 @@ class GuruStaff extends BaseController
             'bidang' => $this->request->getPost('bidang'),
             'email' => $this->request->getPost('email'),
             'no_hp' => $this->request->getPost('no_hp'),
+            'bio' => $this->request->getPost('bio'),
             'foto' => $this->request->getPost('foto'), // Path from Media Library
             'status' => $this->request->getPost('status'),
             'is_active' => $this->request->getPost('is_active') ? 1 : 0,
@@ -82,8 +142,12 @@ class GuruStaff extends BaseController
 
         $rules = [
             'nama_lengkap' => 'required|min_length[3]|max_length[150]',
+            'jabatan' => 'required|max_length[100]',
+            'bidang' => 'required|max_length[100]',
             'status' => 'required|in_list[guru,staff]',
             'email' => 'permit_empty|valid_email',
+            'foto' => 'permit_empty|max_length[255]',
+            'bio' => 'permit_empty',
         ];
 
         if (! $this->validate($rules)) {
@@ -97,6 +161,7 @@ class GuruStaff extends BaseController
             'bidang' => $this->request->getPost('bidang'),
             'email' => $this->request->getPost('email'),
             'no_hp' => $this->request->getPost('no_hp'),
+            'bio' => $this->request->getPost('bio'),
             'foto' => $this->request->getPost('foto'),
             'status' => $this->request->getPost('status'),
             'is_active' => $this->request->getPost('is_active') ? 1 : 0,
@@ -109,5 +174,22 @@ class GuruStaff extends BaseController
     {
         $this->guruStaffModel->delete($id);
         return redirect()->to('/dashboard/guru-staff')->with('message', 'Data deleted successfully.');
+    }
+
+    public function bulkDelete()
+    {
+        $ids = $this->request->getPost('ids');
+        if (!$ids || !is_array($ids)) {
+            return redirect()->back()->with('error', 'No guru/staff selected.');
+        }
+
+        $count = 0;
+        foreach ($ids as $id) {
+            if ($this->guruStaffModel->delete($id)) {
+                $count++;
+            }
+        }
+
+        return redirect()->to('/dashboard/guru-staff')->with('message', "$count guru/staff deleted successfully.");
     }
 }

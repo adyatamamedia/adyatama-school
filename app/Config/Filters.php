@@ -59,7 +59,6 @@ class Filters extends BaseFilters
         'after' => [
             'pagecache',   // Web Page Caching
             'performance', // Performance Metrics
-            'toolbar',     // Debug Toolbar
         ],
     ];
 
@@ -108,5 +107,17 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        'toolbar' => [
+            'after' => [
+                '*',
+            ],
+            'except' => [
+                'admin/summernote/upload',
+                'admin/summernote/upload/*',
+                'admin/media/upload',
+                'admin/media/upload/*',
+            ],
+        ],
+    ];
 }

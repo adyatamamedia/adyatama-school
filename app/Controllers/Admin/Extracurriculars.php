@@ -16,9 +16,61 @@ class Extracurriculars extends BaseController
 
     public function index()
     {
+        // Get query parameters
+        $perPage = $this->request->getGet('per_page') ?? 25;
+        $sortBy = $this->request->getGet('sort') ?? 'name_asc';
+        $search = $this->request->getGet('search') ?? '';
+        
+        // Build query
+        $builder = $this->ekskulModel;
+        
+        // Apply search
+        if ($search) {
+            $builder->groupStart()
+                ->like('name', $search)
+                ->orLike('description', $search)
+                ->groupEnd();
+        }
+        
+        // Apply sorting
+        switch ($sortBy) {
+            case 'name_desc':
+                $builder->orderBy('name', 'DESC');
+                break;
+            case 'newest':
+                $builder->orderBy('created_at', 'DESC');
+                break;
+            case 'oldest':
+                $builder->orderBy('created_at', 'ASC');
+                break;
+            case 'name_asc':
+            default:
+                $builder->orderBy('name', 'ASC');
+                break;
+        }
+        
         $data = [
             'title' => 'Extracurriculars',
-            'ekskuls' => $this->ekskulModel->orderBy('name', 'ASC')->findAll()
+            'ekskuls' => $builder->paginate($perPage, 'default'),
+            'pager' => $builder->pager,
+            'perPage' => $perPage,
+            'sortBy' => $sortBy,
+            'search' => $search,
+            'sortOptions' => [
+                'name_asc' => 'Nama A-Z',
+                'name_desc' => 'Nama Z-A',
+                'newest' => 'Terbaru',
+                'oldest' => 'Terlama'
+            ],
+            'enableBulkActions' => true,
+            'bulkActions' => [
+                ['action' => 'delete', 'label' => 'Hapus', 'icon' => 'trash', 'variant' => 'danger', 'confirm' => 'Hapus ekstrakurikuler terpilih?']
+            ],
+            'createButton' => [
+                'url' => '#',
+                'label' => 'Buat Ekstrakurikuler',
+                'modal' => 'createEkskulModal'
+            ]
         ];
 
         return view('admin/extracurriculars/index', $data);
@@ -92,5 +144,23 @@ class Extracurriculars extends BaseController
     {
         $this->ekskulModel->delete($id);
         return redirect()->to('/dashboard/extracurriculars')->with('message', 'Extracurricular deleted successfully.');
+    }
+
+    public function bulkDelete()
+    {
+        $ids = $this->request->getPost('ids');
+
+        if (!$ids || !is_array($ids)) {
+            return redirect()->back()->with('error', 'No extracurriculars selected.');
+        }
+
+        $count = 0;
+        foreach ($ids as $id) {
+            if ($this->ekskulModel->delete($id)) {
+                $count++;
+            }
+        }
+
+        return redirect()->to('/dashboard/extracurriculars')->with('message', "$count extracurricular(s) deleted successfully.");
     }
 }
