@@ -555,6 +555,83 @@ class Posts extends BaseController
         return redirect()->to('/dashboard/posts')->with('message', "$count post(s) published.");
     }
 
+    public function trash()
+    {
+        // Get query parameters (reuse existing params for consistency)
+        $perPage = $this->request->getGet('per_page') ?? 25;
+        $search = $this->request->getGet('search') ?? '';
+        
+        // Build query for deleted items
+        $builder = $this->postModel->onlyDeleted()
+            ->select('posts.*, categories.name as category_name, users.fullname as author_name')
+            ->join('categories', 'categories.id = posts.category_id', 'left')
+            ->join('users', 'users.id = posts.author_id', 'left');
+        
+        if ($search) {
+            $builder->groupStart()
+                ->like('posts.title', $search)
+                ->orLike('posts.content', $search)
+                ->groupEnd();
+        }
+        
+        $builder->orderBy('posts.deleted_at', 'DESC');
+        
+        $data = [
+            'title' => 'Trash - Manage Posts',
+            'posts' => $builder->paginate($perPage, 'default'),
+            'pager' => $builder->pager,
+            'perPage' => $perPage,
+            'search' => $search,
+            'enableBulkActions' => true,
+            'bulkActions' => [
+                ['action' => 'restore', 'label' => 'Restore', 'icon' => 'trash-restore', 'variant' => 'success', 'confirm' => 'Restore post terpilih?'],
+                ['action' => 'force-delete', 'label' => 'Delete Permanently', 'icon' => 'ban', 'variant' => 'danger', 'confirm' => 'Hapus permanen? Tidak bisa dikembalikan!']
+            ]
+        ];
+
+        return view('admin/posts/trash', $data);
+    }
+
+    public function restore($id)
+    {
+        // Restore specific post
+        $db = \Config\Database::connect();
+        $db->table('posts')->where('id', $id)->update(['deleted_at' => null]);
+        log_activity('restore_post', 'post', $id);
+        return redirect()->to('/dashboard/posts/trash')->with('message', 'Post restored successfully.');
+    }
+
+    public function bulkRestore()
+    {
+        $ids = $this->request->getPost('ids');
+        if (!$ids || !is_array($ids)) return redirect()->back()->with('error', 'No posts selected.');
+
+        $db = \Config\Database::connect();
+        $count = 0;
+        foreach ($ids as $id) {
+            $db->table('posts')->where('id', $id)->update(['deleted_at' => null]);
+            log_activity('bulk_restore_post', 'post', $id);
+            $count++;
+        }
+
+        return redirect()->to('/dashboard/posts/trash')->with('message', "$count post(s) restored.");
+    }
+
+    public function bulkForceDelete()
+    {
+        $ids = $this->request->getPost('ids');
+        if (!$ids || !is_array($ids)) return redirect()->back()->with('error', 'No posts selected.');
+
+        $count = 0;
+        foreach ($ids as $id) {
+            $this->postModel->delete($id, true); // True for purge/force delete
+            log_activity('bulk_force_delete_post', 'post', $id);
+            $count++;
+        }
+
+        return redirect()->to('/dashboard/posts/trash')->with('message', "$count post(s) permanently deleted.");
+    }
+
     /**
      * Get unique slug by auto-incrementing if duplicate
      * 

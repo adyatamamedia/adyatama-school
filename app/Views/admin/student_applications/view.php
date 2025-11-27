@@ -12,7 +12,7 @@
 <div class="row">
     <!-- Data Siswa -->
     <div class="col-md-8">
-        <div class="card shadow mb-4">
+        <div class="card shadow-sm mb-4">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0"><i class="fas fa-user me-2"></i>Data Siswa</h5>
             </div>
@@ -58,7 +58,7 @@
             </div>
         </div>
 
-        <div class="card shadow mb-4">
+        <div class="card shadow-sm mb-4">
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0"><i class="fas fa-users me-2"></i>Data Orang Tua</h5>
             </div>
@@ -84,7 +84,7 @@
         </div>
 
         <!-- Dokumen -->
-        <div class="card shadow mb-4">
+        <div class="card shadow-sm mb-4">
             <div class="card-header bg-warning">
                 <h5 class="mb-0"><i class="fas fa-file-image me-2"></i>Dokumen Lampiran</h5>
             </div>
@@ -190,7 +190,7 @@
     <!-- Sidebar -->
     <div class="col-md-4">
         <!-- Status -->
-        <div class="card shadow mb-4">
+        <div class="card shadow-sm mb-4">
             <div class="card-header bg-info text-white">
                 <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Status Pendaftaran</h5>
             </div>
@@ -247,7 +247,7 @@
         </div>
 
         <!-- Actions -->
-        <div class="card shadow mb-4">
+        <div class="card shadow-sm mb-4">
             <div class="card-header bg-secondary text-white">
                 <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Aksi</h5>
             </div>

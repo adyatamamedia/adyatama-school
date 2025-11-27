@@ -219,3 +219,39 @@ if (!function_exists('get_trend_indicator')) {
         }
     }
 }
+
+if (!function_exists('nav_active')) {
+    /**
+     * Check if current URL matches patterns
+     * 
+     * @param string|array $patterns Patterns to match
+     * @param string $mode 'contains' or 'exact'
+     * @return string 'active' or ''
+     */
+    function nav_active($patterns, $mode = 'contains')
+    {
+        $uri = uri_string();
+        $patterns = is_array($patterns) ? $patterns : [$patterns];
+
+        foreach ($patterns as $pattern) {
+            if ($mode === 'exact') {
+                if ($uri === $pattern) return 'active';
+            } else {
+                if (strpos($uri, $pattern) !== false) return 'active';
+            }
+        }
+        return '';
+    }
+}
+
+if (!function_exists('nav_menu_open')) {
+    /**
+     * Check if menu should be open
+     * 
+     * @param string|array $patterns Patterns to match
+     * @return string 'menu-open' or ''
+     */
+    function nav_menu_open($patterns) {
+        return nav_active($patterns) !== '' ? 'menu-open' : '';
+    }
+}

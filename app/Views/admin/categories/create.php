@@ -8,7 +8,7 @@
 
 <div class="row justify-content-center">
     <div class="col-lg-6">
-        <div class="card shadow mb-4">
+        <div class="card shadow-sm mb-4">
             <div class="card-body">
                 <?php if (session()->getFlashdata('errors')) : ?>
                     <div class="alert alert-danger">

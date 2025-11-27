@@ -19,7 +19,7 @@
     <div class="row">
         <!-- Left Column (Main Content) -->
         <div class="col-md-8">
-            <div class="card shadow mb-4">
+            <div class="card shadow-sm mb-4">
                 <div class="card-body">
                     <!-- Title -->
                     <div class="mb-3">
@@ -39,7 +39,7 @@
         <!-- Right Column (Sidebar) -->
         <div class="col-md-4">
             <!-- Publish Card -->
-            <div class="card shadow mb-3">
+            <div class="card shadow-sm mb-3">
                 <div class="card-header bg-light">
                     <strong>Publikasi</strong>
                 </div>
@@ -55,7 +55,7 @@
             </div>
 
             <!-- Extracurricular Card -->
-            <div class="card shadow mb-3">
+            <div class="card shadow-sm mb-3">
                 <div class="card-header bg-light">
                     <strong>Ekstrakurikuler</strong>
                 </div>
@@ -73,7 +73,7 @@
             </div>
 
             <!-- Featured Image (Cover) Card -->
-            <div class="card shadow mb-3">
+            <div class="card shadow-sm mb-3">
                 <div class="card-header bg-light">
                     <strong>Featured Image</strong>
                 </div>
@@ -95,7 +95,7 @@
             </div>
 
             <!-- Gallery Items Card -->
-            <div class="card shadow mb-3">
+            <div class="card shadow-sm mb-3">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <strong>Gallery Items</strong>
                     <span class="badge bg-primary ms-auto" id="selectedCount"><?= count($items ?? []) ?> selected</span>

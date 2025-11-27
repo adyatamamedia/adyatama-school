@@ -19,13 +19,13 @@
     </div>
 <?php endif; ?>
 
-<form action="<?= base_url('dashboard/users/update/' . $user->id) ?>" method="post">
+<form action="<?= base_url('dashboard/users/update/' . $user->id) ?>" method="post" enctype="multipart/form-data">
     <?= csrf_field() ?>
     
     <div class="row">
         <!-- Left Column: Main Form -->
         <div class="col-md-8">
-            <div class="card shadow mb-4">
+            <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white">
                     <strong><i class="fas fa-user-edit me-2"></i>User Information</strong>
                 </div>
@@ -57,8 +57,59 @@
 
         <!-- Right Column: Settings -->
         <div class="col-md-4">
+            <!-- Avatar Upload Card -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-light">
+                    <strong><i class="fas fa-image me-2"></i>Profile Photo</strong>
+                </div>
+                <div class="card-body text-center">
+                    <!-- Avatar Preview -->
+                    <div class="mb-3">
+                        <div class="avatar-preview mx-auto" style="width: 150px; height: 150px; border-radius: 50%; overflow: hidden; border: 3px solid #e9ecef; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                            <?php if (!empty($user->photo) && file_exists(FCPATH . $user->photo)): ?>
+                                <img id="avatarPreview" src="<?= base_url($user->photo) ?>" alt="Current Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                <div id="avatarPlaceholder" style="font-size: 4rem; color: #dee2e6; display: none;">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            <?php else: ?>
+                                <img id="avatarPreview" src="" alt="Avatar Preview" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                                <div id="avatarPlaceholder" style="font-size: 4rem; color: #dee2e6;">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Current Photo Info -->
+                    <?php if (!empty($user->photo)): ?>
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                <i class="fas fa-check-circle text-success me-1"></i>
+                                Current photo uploaded
+                            </small>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- File Input -->
+                    <div class="mb-2">
+                        <input type="file" class="form-control" id="photo" name="photo" accept="image/*" onchange="previewAvatar(event)">
+                        <small class="text-muted d-block mt-1">Max: 2MB (JPG, PNG) - Leave blank to keep current</small>
+                    </div>
+
+                    <!-- Delete Photo Option -->
+                    <?php if (!empty($user->photo)): ?>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="delete_photo" name="delete_photo" value="1">
+                            <label class="form-check-label small text-danger" for="delete_photo">
+                                <i class="fas fa-trash me-1"></i>Delete current photo
+                            </label>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
             <!-- Role & Status Card -->
-            <div class="card shadow mb-3">
+            <div class="card shadow-sm mb-3">
                 <div class="card-header bg-light">
                     <strong>Settings</strong>
                 </div>
@@ -90,5 +141,53 @@
         </div>
     </div>
 </form>
+
+<script>
+function previewAvatar(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById('avatarPreview');
+    const placeholder = document.getElementById('avatarPlaceholder');
+    const deleteCheckbox = document.getElementById('delete_photo');
+    
+    if (file) {
+        // Check file size (2MB = 2097152 bytes)
+        if (file.size > 2097152) {
+            alert('File size exceeds 2MB. Please choose a smaller file.');
+            event.target.value = '';
+            return;
+        }
+        
+        // Check file type
+        if (!file.type.match('image.*')) {
+            alert('Please select an image file (JPG, PNG, GIF).');
+            event.target.value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            placeholder.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+        
+        // Uncheck delete photo if new file selected
+        if (deleteCheckbox) {
+            deleteCheckbox.checked = false;
+        }
+    } else {
+        // If no new file and there's an existing photo
+        <?php if (!empty($user->photo) && file_exists(FCPATH . $user->photo)): ?>
+            preview.src = '<?= base_url($user->photo) ?>';
+            preview.style.display = 'block';
+            placeholder.style.display = 'none';
+        <?php else: ?>
+            preview.style.display = 'none';
+            placeholder.style.display = 'block';
+        <?php endif; ?>
+    }
+}
+</script>
 
 <?= $this->endSection() ?>

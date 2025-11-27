@@ -28,6 +28,7 @@ if (! function_exists('current_user')) {
             'username' => session('username'),
             'role' => session('role'),
             'fullname' => session('fullname'),
+            'photo' => session('photo'),
         ];
     }
 }
@@ -104,5 +105,137 @@ if (! function_exists('log_activity')) {
             'user_agent'   => $request->getUserAgent()->getAgentString(),
             'meta'         => $meta ? json_encode($meta) : null,
         ]);
+    }
+}
+
+if (! function_exists('get_user_avatar')) {
+    /**
+     * Get user avatar URL with fallback to generated avatar.
+     * 
+     * @param object|null $user User object (uses current_user if null)
+     * @return string Avatar URL
+     */
+    function get_user_avatar($user = null)
+    {
+        if ($user === null) {
+            $user = current_user();
+        }
+
+        if (!$user) {
+            return 'https://ui-avatars.com/api/?name=Guest&background=random';
+        }
+
+        // Check if user has uploaded photo
+        if (!empty($user->photo) && file_exists(FCPATH . $user->photo)) {
+            return base_url($user->photo);
+        }
+
+        // Fallback to generated avatar
+        $name = $user->fullname ?? $user->username ?? 'User';
+        return 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&background=random';
+    }
+}
+
+if (! function_exists('get_notifications_count')) {
+    /**
+     * Get total unread notifications count.
+     * 
+     * @return int Total count
+     */
+    function get_notifications_count()
+    {
+        $db = \Config\Database::connect();
+        $count = 0;
+
+        // Count pending comments
+        if ($db->tableExists('comments')) {
+            $count += $db->table('comments')
+                ->where('is_approved', 0)
+                ->where('is_spam', 0)
+                ->countAllResults();
+        }
+
+        // Count pending student applications
+        if ($db->tableExists('student_applications')) {
+            $count += $db->table('student_applications')
+                ->where('status', 'pending')
+                ->countAllResults();
+        }
+
+        return $count;
+    }
+}
+
+if (! function_exists('get_recent_notifications')) {
+    /**
+     * Get recent notifications (pending comments & applications).
+     * 
+     * @param int $limit Number of notifications to return
+     * @return array Array of notification objects
+     */
+    function get_recent_notifications($limit = 5)
+    {
+        $db = \Config\Database::connect();
+        $notifications = [];
+
+        // Get pending comments
+        if ($db->tableExists('comments')) {
+            $comments = $db->table('comments')
+                ->select('comments.*, posts.title as post_title')
+                ->join('posts', 'posts.id = comments.post_id', 'left')
+                ->where('comments.is_approved', 0)
+                ->where('comments.is_spam', 0)
+                ->orderBy('comments.created_at', 'DESC')
+                ->limit($limit)
+                ->get()
+                ->getResult();
+
+            foreach ($comments as $comment) {
+                $notifications[] = (object)[
+                    'id' => $comment->id,
+                    'type' => 'comment',
+                    'title' => 'New Comment',
+                    'message' => substr($comment->content, 0, 50) . '...',
+                    'author' => $comment->author_name ?? 'Anonymous',
+                    'post_title' => $comment->post_title ?? 'Unknown Post',
+                    'url' => base_url('dashboard/comments'),
+                    'icon' => 'fas fa-comment',
+                    'color' => 'info',
+                    'created_at' => $comment->created_at,
+                ];
+            }
+        }
+
+        // Get pending student applications
+        if ($db->tableExists('student_applications')) {
+            $applications = $db->table('student_applications')
+                ->where('status', 'pending')
+                ->orderBy('created_at', 'DESC')
+                ->limit($limit)
+                ->get()
+                ->getResult();
+
+            foreach ($applications as $app) {
+                $notifications[] = (object)[
+                    'id' => $app->id,
+                    'type' => 'application',
+                    'title' => 'New Student Application',
+                    'message' => 'Application from ' . $app->nama_lengkap,
+                    'author' => $app->nama_lengkap,
+                    'post_title' => '',
+                    'url' => base_url('dashboard/pendaftaran'),
+                    'icon' => 'fas fa-user-plus',
+                    'color' => 'success',
+                    'created_at' => $app->created_at,
+                ];
+            }
+        }
+
+        // Sort by created_at and limit
+        usort($notifications, function($a, $b) {
+            return strtotime($b->created_at) - strtotime($a->created_at);
+        });
+
+        return array_slice($notifications, 0, $limit);
     }
 }

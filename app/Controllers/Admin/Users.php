@@ -109,14 +109,51 @@ class Users extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $this->userModel->save([
+        $data = [
             'username' => $this->request->getPost('username'),
             'email'    => $this->request->getPost('email'),
             'fullname' => $this->request->getPost('fullname'),
             'password_hash' => password_hash($this->request->getPost('password'), PASSWORD_DEFAULT),
             'role_id'  => $this->request->getPost('role_id'),
             'status'   => $this->request->getPost('status'),
-        ]);
+        ];
+
+        // Handle photo upload
+        $photo = $this->request->getFile('photo');
+        if ($photo && $photo->isValid() && !$photo->hasMoved()) {
+            // Validate photo
+            $photoRules = [
+                'photo' => [
+                    'rules' => 'max_size[photo,2048]|is_image[photo]|mime_in[photo,image/jpg,image/jpeg,image/png,image/gif]',
+                    'errors' => [
+                        'max_size' => 'Image size cannot exceed 2MB',
+                        'is_image' => 'Please select a valid image file',
+                        'mime_in' => 'Only JPG, PNG, and GIF images are allowed'
+                    ]
+                ]
+            ];
+
+            if ($this->validate($photoRules)) {
+                // Create uploads/users directory if not exists
+                $uploadPath = FCPATH . 'uploads/users';
+                if (!is_dir($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+
+                // Generate random filename
+                $newName = $photo->getRandomName();
+                
+                // Move file
+                $photo->move($uploadPath, $newName);
+                
+                // Store relative path in database
+                $data['photo'] = 'uploads/users/' . $newName;
+            } else {
+                return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+            }
+        }
+
+        $this->userModel->save($data);
 
         return redirect()->to('/dashboard/users')->with('message', 'User created successfully.');
     }
@@ -165,6 +202,56 @@ class Users extends BaseController
         $password = $this->request->getPost('password');
         if (!empty($password)) {
             $data['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
+        }
+
+        // Handle delete photo checkbox
+        if ($this->request->getPost('delete_photo') == '1') {
+            // Delete physical file if exists
+            if (!empty($user->photo) && file_exists(FCPATH . $user->photo)) {
+                @unlink(FCPATH . $user->photo);
+            }
+            // Set photo to null in database
+            $data['photo'] = null;
+        }
+
+        // Handle new photo upload
+        $photo = $this->request->getFile('photo');
+        if ($photo && $photo->isValid() && !$photo->hasMoved()) {
+            // Validate photo
+            $photoRules = [
+                'photo' => [
+                    'rules' => 'max_size[photo,2048]|is_image[photo]|mime_in[photo,image/jpg,image/jpeg,image/png,image/gif]',
+                    'errors' => [
+                        'max_size' => 'Image size cannot exceed 2MB',
+                        'is_image' => 'Please select a valid image file',
+                        'mime_in' => 'Only JPG, PNG, and GIF images are allowed'
+                    ]
+                ]
+            ];
+
+            if ($this->validate($photoRules)) {
+                // Delete old photo if exists (only if not already deleted by checkbox)
+                if (!$this->request->getPost('delete_photo') && !empty($user->photo) && file_exists(FCPATH . $user->photo)) {
+                    @unlink(FCPATH . $user->photo);
+                }
+
+                // Create uploads/users directory if not exists
+                $uploadPath = FCPATH . 'uploads/users';
+                if (!is_dir($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+
+                // Generate random filename
+                $newName = $photo->getRandomName();
+                
+                // Move file
+                $photo->move($uploadPath, $newName);
+                
+                // Store relative path in database
+                $data['photo'] = 'uploads/users/' . $newName;
+            } else {
+                return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+            }
         }
 
         $this->userModel->update($id, $data);

@@ -19,7 +19,7 @@
                         </li>
                     </ul>
 
-                    <div class="card shadow mb-4 border-top-0 rounded-top-0">
+                    <div class="card shadow-sm mb-4 border-top-0 rounded-top-0">
                         <div class="card-body">
                             <div class="tab-content" id="pageTabsContent">
                                 <!-- Content Tab -->
@@ -56,7 +56,7 @@
 
                 <!-- Right Column -->
                 <div class="col-md-4">
-                    <div class="card shadow mb-4">
+                    <div class="card shadow-sm mb-4">
                         <div class="card-header py-3">
                             <h6 class="m-0 font-weight-bold text-primary">Pengaturan Publikasi</h6>
                         </div>

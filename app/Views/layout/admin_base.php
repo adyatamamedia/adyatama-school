@@ -6,10 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $title ?? 'Dashboard' ?> - Adyatama School CMS</title>
 
-    <!-- Google Font: Source Sans Pro -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="<?= base_url('favicon_adyatama1.png') ?>">
+    <link rel="shortcut icon" type="image/png" href="<?= base_url('favicon_adyatama1.png') ?>">
+    <link rel="apple-touch-icon" href="<?= base_url('favicon_adyatama1.png') ?>">
+
+    <!-- Google Font: Inter -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    <!-- Font Awesome 6 - Multiple CDN fallback -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/css/all.min.css" />
     <!-- AdminLTE 4 CSS -->
     <link href="<?= base_url('assets/vendor/adminlte/css/adminlte.min.css') ?>" rel="stylesheet">
     <!-- Summernote CSS (Lite version for better BS5 compatibility) -->
@@ -17,6 +23,84 @@
 
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <style>
+        /* ===== Global Font: Inter ===== */
+        :root {
+            --bs-primary: #667eea;
+            --bs-primary-rgb: 102, 126, 234;
+            --bs-link-color: #667eea;
+            --bs-link-hover-color: #5a67d8;
+        }
+        
+        /* Override Bootstrap Button Variables for consistency */
+        .btn-primary {
+            --bs-btn-bg: #667eea;
+            --bs-btn-border-color: #667eea;
+            --bs-btn-hover-bg: #5a67d8;
+            --bs-btn-hover-border-color: #5a67d8;
+            --bs-btn-active-bg: #4c51bf;
+            --bs-btn-active-border-color: #4c51bf;
+        }
+
+        .bg-primary {
+            background-color: #667eea !important;
+        }
+
+        .text-primary {
+            color: #667eea !important;
+        }
+
+        /* Compact Table Font */
+        .table {
+            font-size: 0.85rem;
+        }
+        .table th {
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+            font-weight: 400;
+            font-size: 0.9rem; /* Compact global font size */
+            font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Force Inter on all elements */
+        h1, h2, h3, h4, h5, h6,
+        p, span, div, a, button, input, textarea, select,
+        .btn, .form-control, .card, .modal, .dropdown-menu,
+        .nav-link, .navbar, .sidebar, .brand-text {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+        }
+
+        /* ===== FontAwesome Fix for Global Font Override ===== */
+        /* Reset font-family for icons that were overridden by the global rule above */
+        .fa, .fas, .fa-solid, .nav-icon.fas, .nav-icon.fa-solid {
+            font-family: "Font Awesome 6 Free" !important;
+            font-weight: 900 !important;
+        }
+        
+        .far, .fa-regular, .nav-icon.far, .nav-icon.fa-regular {
+            font-family: "Font Awesome 6 Free" !important;
+            font-weight: 400 !important;
+        }
+        
+        .fab, .fa-brands, .nav-icon.fab, .nav-icon.fa-brands {
+            font-family: "Font Awesome 6 Brands" !important;
+            font-weight: 400 !important;
+        }
+    </style>
+    
     <script>
         // Ensure jQuery is globally available immediately
         if (typeof jQuery !== 'undefined') {

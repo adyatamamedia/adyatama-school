@@ -20,18 +20,18 @@ function formatBytes($bytes, $precision = 2)
     <div class="container-fluid">
         <div class="row align-items-center">
             <div class="col-md-6">
-                <h1 class="display-5 fw-bold mb-2">Dashboard Overview</h1>
-                <p class="lead mb-0 opacity-75">Selamat datang kembali, <?= esc(current_user()->fullname ?? 'Admin') ?>!</p>
+                <h1 class="fs-4 fw-bold mb-1">Dashboard Overview</h1>
+                <p class="text-white mb-0 opacity-75 small">Selamat datang kembali, <?= esc(current_user()->fullname ?? 'Admin') ?>!</p>
             </div>
             <div class="col-md-6 text-md-end">
                 <div class="d-flex align-items-center justify-content-md-end gap-3">
                     <div>
-                        <small class="d-block opacity-75">Terakhir login</small>
-                        <strong><?= date('d M Y H:i', strtotime(current_user()->last_login ?? 'now')) ?></strong>
+                        <small class="d-block opacity-75" style="font-size: 0.75rem;">Terakhir login</small>
+                        <strong style="font-size: 0.85rem;"><?= date('d M Y H:i', strtotime(current_user()->last_login ?? 'now')) ?></strong>
                     </div>
                     <div class="pulse">
                         <i class="fas fa-circle text-success" style="font-size: 0.5rem;"></i>
-                        <span class="ms-1">Online</span>
+                        <span class="ms-1 small">Online</span>
                     </div>
                 </div>
             </div>
@@ -48,10 +48,10 @@ function formatBytes($bytes, $precision = 2)
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="flex-grow-1">
-                            <div class="stat-label mb-2">
+                            <div class="stat-label mb-2 small text-uppercase fw-bold text-muted">
                                 <i class="fas fa-newspaper me-2"></i>Total Posts
                             </div>
-                            <h2 class="counter-animate mb-2" data-target="<?= $stats['posts']['total'] ?? 0 ?>">0</h2>
+                            <h2 class="counter-animate mb-2 fs-3 fw-bold" data-target="<?= $stats['posts']['total'] ?? 0 ?>">0</h2>
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <?php
                                 $growth = $stats['posts']['growth'] ?? 0;
@@ -83,10 +83,10 @@ function formatBytes($bytes, $precision = 2)
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="flex-grow-1">
-                            <div class="stat-label mb-2">
+                            <div class="stat-label mb-2 small text-uppercase fw-bold text-muted">
                                 <i class="fas fa-images me-2"></i>Total Galeri
                             </div>
-                            <h2 class="counter-animate mb-2" data-target="<?= $stats['galleries']['total'] ?? 0 ?>">0</h2>
+                            <h2 class="counter-animate mb-2 fs-3 fw-bold" data-target="<?= $stats['galleries']['total'] ?? 0 ?>">0</h2>
                             <div class="mb-2">
                                 <span class="badge bg-info-subtle text-info">
                                     <i class="fas fa-photo-video me-1"></i><?= $stats['galleries']['total_items'] ?? 0 ?> items
@@ -110,10 +110,10 @@ function formatBytes($bytes, $precision = 2)
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="flex-grow-1">
-                            <div class="stat-label mb-2">
+                            <div class="stat-label mb-2 small text-uppercase fw-bold text-muted">
                                 <i class="fas fa-users me-2"></i>Guru & Staff
                             </div>
-                            <h2 class="counter-animate mb-2" data-target="<?= $stats['guru_staff']['total'] ?? 0 ?>">0</h2>
+                            <h2 class="counter-animate mb-2 fs-3 fw-bold" data-target="<?= $stats['guru_staff']['total'] ?? 0 ?>">0</h2>
                             <div class="d-flex gap-2 mb-2">
                                 <span class="badge bg-primary-subtle text-primary">
                                     <i class="fas fa-chalkboard-teacher me-1"></i><?= $stats['guru_staff']['guru'] ?? 0 ?> guru
@@ -146,10 +146,10 @@ function formatBytes($bytes, $precision = 2)
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="flex-grow-1">
-                            <div class="stat-label mb-2">
+                            <div class="stat-label mb-2 small text-uppercase fw-bold text-muted">
                                 <i class="fas fa-eye me-2"></i>Total Views
                             </div>
-                            <h2 class="counter-animate mb-2" data-target="<?= $stats['views']['total_30_days'] ?? 0 ?>">0</h2>
+                            <h2 class="counter-animate mb-2 fs-3 fw-bold" data-target="<?= $stats['views']['total_30_days'] ?? 0 ?>">0</h2>
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <?php
                                 $viewGrowth = $stats['views']['growth'] ?? 0;
@@ -187,7 +187,7 @@ function formatBytes($bytes, $precision = 2)
                             <i class="fas fa-file-alt"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <h3 class="mb-0 counter-simple text-dark" data-target="<?= $stats['pages']['total'] ?? 0 ?>">0</h3>
+                            <h3 class="mb-0 counter-simple text-dark fs-4 fw-bold" data-target="<?= $stats['pages']['total'] ?? 0 ?>">0</h3>
                             <small class="text-muted">Halaman</small>
                         </div>
                     </div>
@@ -204,7 +204,7 @@ function formatBytes($bytes, $precision = 2)
                             <i class="fas fa-comments"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <h3 class="mb-0 counter-simple text-dark" data-target="<?= $stats['comments']['pending'] ?? 0 ?>">0</h3>
+                            <h3 class="mb-0 counter-simple text-dark fs-4 fw-bold" data-target="<?= $stats['comments']['pending'] ?? 0 ?>">0</h3>
                             <small class="text-muted">Pending Comments</small>
                         </div>
                     </div>
@@ -221,7 +221,7 @@ function formatBytes($bytes, $precision = 2)
                             <i class="fas fa-user-graduate"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <h3 class="mb-0 counter-simple text-dark" data-target="<?= $stats['student_applications']['pending'] ?? 0 ?>">0</h3>
+                            <h3 class="mb-0 counter-simple text-dark fs-4 fw-bold" data-target="<?= $stats['student_applications']['pending'] ?? 0 ?>">0</h3>
                             <small class="text-muted">Pendaftaran Pending</small>
                         </div>
                     </div>
@@ -238,7 +238,7 @@ function formatBytes($bytes, $precision = 2)
                             <i class="fas fa-folder-open"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <h3 class="mb-0 counter-simple text-dark" data-target="<?= $stats['media']['total'] ?? 0 ?>">0</h3>
+                            <h3 class="mb-0 counter-simple text-dark fs-4 fw-bold" data-target="<?= $stats['media']['total'] ?? 0 ?>">0</h3>
                             <small class="text-muted">Media (<?= formatBytes($stats['media']['total_size'] ?? 0) ?>)</small>
                         </div>
                     </div>
@@ -256,7 +256,7 @@ function formatBytes($bytes, $precision = 2)
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 fw-semibold">
+                        <h6 class="mb-0 fw-bold text-uppercase small">
                             <i class="fas fa-chart-line me-2 text-primary"></i>
                             Statistik Pengunjung (7 Hari Terakhir)
                         </h6>
@@ -283,7 +283,7 @@ function formatBytes($bytes, $precision = 2)
         <div class="col-xl-4">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-white py-3">
-                    <h6 class="mb-0 fw-semibold">
+                    <h6 class="mb-0 fw-bold text-uppercase small">
                         <i class="fas fa-chart-pie me-2 text-success"></i>
                         Distribusi Konten
                     </h6>
@@ -305,7 +305,7 @@ function formatBytes($bytes, $precision = 2)
         <div class="col-xl-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-white py-3">
-                    <h6 class="mb-0 fw-semibold">
+                    <h6 class="mb-0 fw-bold text-uppercase small">
                         <i class="fas fa-fire me-2 text-danger"></i>
                         Post Terpopuler
                     </h6>
@@ -358,7 +358,7 @@ function formatBytes($bytes, $precision = 2)
         <div class="col-xl-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-white py-3">
-                    <h6 class="mb-0 fw-semibold">
+                    <h6 class="mb-0 fw-bold text-uppercase small">
                         <i class="fas fa-chart-bar me-2 text-info"></i>
                         Aktivitas (7 Hari Terakhir)
                     </h6>
@@ -381,7 +381,7 @@ function formatBytes($bytes, $precision = 2)
             <div class="card shadow-sm">
                 <div class="card-header bg-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 fw-semibold">
+                        <h6 class="mb-0 fw-bold text-uppercase small">
                             <i class="fas fa-history me-2 text-primary"></i>
                             Aktivitas Terbaru
                         </h6>
@@ -491,7 +491,7 @@ function formatBytes($bytes, $precision = 2)
         <div class="col-xl-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-white py-3">
-                    <h6 class="mb-0 fw-semibold">
+                    <h6 class="mb-0 fw-bold text-uppercase small">
                         <i class="fas fa-server me-2 text-success"></i>
                         System Status
                     </h6>
@@ -581,9 +581,9 @@ function formatBytes($bytes, $precision = 2)
 
 <!-- Charts JavaScript -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    jQuery(document).ready(function($) {
         // Chart.js Configuration
-        Chart.defaults.font.family = "'Source Sans Pro', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
+        Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
         Chart.defaults.color = '#6c757d';
 
         // Visitor Statistics Chart
@@ -745,7 +745,7 @@ function formatBytes($bytes, $precision = 2)
                 animateCounter(counter, target);
             }
         });
-    });
+    }); // End jQuery ready
 </script>
 
 <?= $this->endSection() ?>

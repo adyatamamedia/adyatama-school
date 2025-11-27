@@ -2,7 +2,7 @@
 
 <?= $this->section('content') ?>
 <!-- Filters -->
-<div class="card shadow mb-4">
+<div class="card shadow-sm mb-4">
     <div class="card-header bg-light">
         <strong><i class="fas fa-filter me-2"></i>Filter & Search</strong>
     </div>
@@ -53,7 +53,7 @@
 </div>
 
 <!-- Activity Log Table -->
-<div class="card shadow mb-4">
+<div class="card shadow-sm mb-4">
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover table-sm">

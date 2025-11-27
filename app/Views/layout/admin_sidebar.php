@@ -1,8 +1,11 @@
-<aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+<!-- Custom Sidebar CSS -->
+<link rel="stylesheet" href="<?= base_url('css/admin_sidebar.css') ?>">
+
+<aside class="app-sidebar modern-sidebar shadow" data-bs-theme="dark">
     <!-- Sidebar Brand -->
     <div class="sidebar-brand">
         <a href="<?= base_url('dashboard') ?>" class="brand-link">
-            <!-- <img src="" alt="Logo" class="brand-image opacity-75 shadow"> -->
+            <img src="<?= base_url('favicon_adyatama1.png') ?>" alt="Adyatama School Logo" class="brand-image shadow">
             <span class="brand-text fw-light">Adyatama School</span>
         </a>
     </div>
@@ -14,45 +17,45 @@
                 
                 <!-- DASHBOARD -->
                 <li class="nav-item">
-                    <a href="<?= base_url('dashboard') ?>" class="nav-link <?= uri_string() == 'dashboard' ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-tachometer-alt"></i>
+                    <a href="<?= base_url('dashboard') ?>" class="nav-link <?= nav_active('dashboard', 'exact') ?>">
+                        <i class="nav-icon fas fa-th-large"></i>
                         <p>Dashboard</p>
                     </a>
                 </li>
 
                 <!-- MEDIA LIBRARY -->
                 <li class="nav-item">
-                    <a href="<?= base_url('dashboard/media') ?>" class="nav-link <?= strpos(uri_string(), 'media') !== false ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-images"></i>
+                    <a href="<?= base_url('dashboard/media') ?>" class="nav-link <?= nav_active('media') ?>">
+                        <i class="nav-icon fas fa-photo-video"></i>
                         <p>Media Library</p>
                     </a>
                 </li>
 
                 <!-- MANAJEMEN TERMS (DROPDOWN) -->
-                <li class="nav-item <?= (strpos(uri_string(), 'categories') !== false || strpos(uri_string(), 'tags') !== false || strpos(uri_string(), 'extracurriculars') !== false) ? 'menu-open' : '' ?>">
-                    <a href="#" class="nav-link <?= (strpos(uri_string(), 'categories') !== false || strpos(uri_string(), 'tags') !== false || strpos(uri_string(), 'extracurriculars') !== false) ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-tags"></i>
+                <li class="nav-item <?= nav_menu_open(['categories', 'tags', 'extracurriculars']) ?>">
+                    <a href="#" class="nav-link <?= nav_active(['categories', 'tags', 'extracurriculars']) ?>">
+                        <i class="nav-icon fas fa-bookmark"></i>
                         <p>
                             Manajemen Terms
-                            <i class="nav-arrow fas fa-angle-right"></i>
+                            <i class="nav-arrow fas fa-chevron-right"></i>
                         </p>
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="<?= base_url('dashboard/categories') ?>" class="nav-link <?= strpos(uri_string(), 'categories') !== false ? 'active' : '' ?>">
-                                <i class="nav-icon far fa-circle"></i>
+                            <a href="<?= base_url('dashboard/categories') ?>" class="nav-link <?= nav_active('categories') ?>">
+                                <i class="nav-icon fas fa-folder"></i>
                                 <p>Kategori</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="<?= base_url('dashboard/tags') ?>" class="nav-link <?= strpos(uri_string(), 'tags') !== false ? 'active' : '' ?>">
-                                <i class="nav-icon far fa-circle"></i>
+                            <a href="<?= base_url('dashboard/tags') ?>" class="nav-link <?= nav_active('tags') ?>">
+                                <i class="nav-icon fas fa-tag"></i>
                                 <p>Tags</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="<?= base_url('dashboard/extracurriculars') ?>" class="nav-link <?= strpos(uri_string(), 'extracurriculars') !== false ? 'active' : '' ?>">
-                                <i class="nav-icon far fa-circle"></i>
+                            <a href="<?= base_url('dashboard/extracurriculars') ?>" class="nav-link <?= nav_active('extracurriculars') ?>">
+                                <i class="nav-icon fas fa-futbol"></i>
                                 <p>Ekstrakurikuler</p>
                             </a>
                         </li>
@@ -60,24 +63,24 @@
                 </li>
 
                 <!-- MANAJEMEN ARTIKEL (DROPDOWN) -->
-                <li class="nav-item <?= strpos(uri_string(), 'posts') !== false ? 'menu-open' : '' ?>">
-                    <a href="#" class="nav-link <?= strpos(uri_string(), 'posts') !== false ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-newspaper"></i>
+                <li class="nav-item <?= nav_menu_open('posts') ?>">
+                    <a href="#" class="nav-link <?= nav_active('posts') ?>">
+                        <i class="nav-icon fas fa-file-alt"></i>
                         <p>
                             Manajemen Artikel
-                            <i class="nav-arrow fas fa-angle-right"></i>
+                            <i class="nav-arrow fas fa-chevron-right"></i>
                         </p>
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="<?= base_url('dashboard/posts') ?>" class="nav-link <?= uri_string() == 'dashboard/posts' ? 'active' : '' ?>">
-                                <i class="nav-icon far fa-circle"></i>
+                            <a href="<?= base_url('dashboard/posts') ?>" class="nav-link <?= nav_active('dashboard/posts', 'exact') ?>">
+                                <i class="nav-icon fas fa-list"></i>
                                 <p>Daftar Artikel</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="<?= base_url('dashboard/posts/new') ?>" class="nav-link <?= uri_string() == 'dashboard/posts/new' ? 'active' : '' ?>">
-                                <i class="nav-icon far fa-circle"></i>
+                            <a href="<?= base_url('dashboard/posts/new') ?>" class="nav-link <?= nav_active('dashboard/posts/new', 'exact') ?>">
+                                <i class="nav-icon fas fa-plus-circle"></i>
                                 <p>Buat Artikel</p>
                             </a>
                         </li>
@@ -85,24 +88,24 @@
                 </li>
 
                 <!-- MANAJEMEN HALAMAN (DROPDOWN) -->
-                <li class="nav-item <?= strpos(uri_string(), 'pages') !== false ? 'menu-open' : '' ?>">
-                    <a href="#" class="nav-link <?= strpos(uri_string(), 'pages') !== false ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-file-alt"></i>
+                <li class="nav-item <?= nav_menu_open('pages') ?>">
+                    <a href="#" class="nav-link <?= nav_active('pages') ?>">
+                        <i class="nav-icon fas fa-file-invoice"></i>
                         <p>
                             Manajemen Halaman
-                            <i class="nav-arrow fas fa-angle-right"></i>
+                            <i class="nav-arrow fas fa-chevron-right"></i>
                         </p>
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="<?= base_url('dashboard/pages') ?>" class="nav-link <?= uri_string() == 'dashboard/pages' ? 'active' : '' ?>">
-                                <i class="nav-icon far fa-circle"></i>
+                            <a href="<?= base_url('dashboard/pages') ?>" class="nav-link <?= nav_active('dashboard/pages', 'exact') ?>">
+                                <i class="nav-icon fas fa-list"></i>
                                 <p>Daftar Halaman</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="<?= base_url('dashboard/pages/new') ?>" class="nav-link <?= uri_string() == 'dashboard/pages/new' ? 'active' : '' ?>">
-                                <i class="nav-icon far fa-circle"></i>
+                            <a href="<?= base_url('dashboard/pages/new') ?>" class="nav-link <?= nav_active('dashboard/pages/new', 'exact') ?>">
+                                <i class="nav-icon fas fa-plus-circle"></i>
                                 <p>Buat Halaman</p>
                             </a>
                         </li>
@@ -110,24 +113,24 @@
                 </li>
 
                 <!-- MANAJEMEN GALERI (DROPDOWN) -->
-                <li class="nav-item <?= strpos(uri_string(), 'galleries') !== false ? 'menu-open' : '' ?>">
-                    <a href="#" class="nav-link <?= strpos(uri_string(), 'galleries') !== false ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-photo-video"></i>
+                <li class="nav-item <?= nav_menu_open('galleries') ?>">
+                    <a href="#" class="nav-link <?= nav_active('galleries') ?>">
+                        <i class="nav-icon fas fa-images"></i>
                         <p>
                             Manajemen Galeri
-                            <i class="nav-arrow fas fa-angle-right"></i>
+                            <i class="nav-arrow fas fa-chevron-right"></i>
                         </p>
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="<?= base_url('dashboard/galleries') ?>" class="nav-link <?= uri_string() == 'dashboard/galleries' ? 'active' : '' ?>">
-                                <i class="nav-icon far fa-circle"></i>
+                            <a href="<?= base_url('dashboard/galleries') ?>" class="nav-link <?= nav_active('dashboard/galleries', 'exact') ?>">
+                                <i class="nav-icon fas fa-list"></i>
                                 <p>Daftar Galeri</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="<?= base_url('dashboard/galleries/new') ?>" class="nav-link <?= uri_string() == 'dashboard/galleries/new' ? 'active' : '' ?>">
-                                <i class="nav-icon far fa-circle"></i>
+                            <a href="<?= base_url('dashboard/galleries/new') ?>" class="nav-link <?= nav_active('dashboard/galleries/new', 'exact') ?>">
+                                <i class="nav-icon fas fa-plus-circle"></i>
                                 <p>Tambah Galeri</p>
                             </a>
                         </li>
@@ -136,31 +139,31 @@
 
                 <!-- PENDAFTARAN -->
                 <li class="nav-item">
-                    <a href="<?= base_url('dashboard/pendaftaran') ?>" class="nav-link <?= strpos(uri_string(), 'pendaftaran') !== false ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-user-plus"></i>
+                    <a href="<?= base_url('dashboard/pendaftaran') ?>" class="nav-link <?= nav_active('pendaftaran') ?>">
+                        <i class="nav-icon fas fa-user-graduate"></i>
                         <p>Pendaftaran</p>
                     </a>
                 </li>
 
                 <!-- MANAJEMEN GURU/STAFF (DROPDOWN) -->
-                <li class="nav-item <?= strpos(uri_string(), 'guru-staff') !== false ? 'menu-open' : '' ?>">
-                    <a href="#" class="nav-link <?= strpos(uri_string(), 'guru-staff') !== false ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-chalkboard-teacher"></i>
+                <li class="nav-item <?= nav_menu_open('guru-staff') ?>">
+                    <a href="#" class="nav-link <?= nav_active('guru-staff') ?>">
+                        <i class="nav-icon fas fa-user-tie"></i>
                         <p>
                             Manajemen Guru/Staff
-                            <i class="nav-arrow fas fa-angle-right"></i>
+                            <i class="nav-arrow fas fa-chevron-right"></i>
                         </p>
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="<?= base_url('dashboard/guru-staff') ?>" class="nav-link <?= uri_string() == 'dashboard/guru-staff' ? 'active' : '' ?>">
-                                <i class="nav-icon far fa-circle"></i>
+                            <a href="<?= base_url('dashboard/guru-staff') ?>" class="nav-link <?= nav_active('dashboard/guru-staff', 'exact') ?>">
+                                <i class="nav-icon fas fa-list"></i>
                                 <p>Daftar Guru/Staff</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="<?= base_url('dashboard/guru-staff/new') ?>" class="nav-link <?= uri_string() == 'dashboard/guru-staff/new' ? 'active' : '' ?>">
-                                <i class="nav-icon far fa-circle"></i>
+                            <a href="<?= base_url('dashboard/guru-staff/new') ?>" class="nav-link <?= nav_active('dashboard/guru-staff/new', 'exact') ?>">
+                                <i class="nav-icon fas fa-plus-circle"></i>
                                 <p>Input Guru/Staff</p>
                             </a>
                         </li>
@@ -169,40 +172,40 @@
 
                 <!-- KOMENTAR -->
                 <li class="nav-item">
-                    <a href="<?= base_url('dashboard/comments') ?>" class="nav-link <?= strpos(uri_string(), 'comments') !== false ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-comments"></i>
+                    <a href="<?= base_url('dashboard/comments') ?>" class="nav-link <?= nav_active('comments') ?>">
+                        <i class="nav-icon fas fa-comment-dots"></i>
                         <p>Komentar</p>
                     </a>
                 </li>
 
                 <!-- SUBSCRIBER -->
                 <li class="nav-item">
-                    <a href="<?= base_url('dashboard/subscribers') ?>" class="nav-link <?= strpos(uri_string(), 'subscribers') !== false ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-envelope"></i>
+                    <a href="<?= base_url('dashboard/subscribers') ?>" class="nav-link <?= nav_active('subscribers') ?>">
+                        <i class="nav-icon fas fa-envelope-open-text"></i>
                         <p>Subscriber</p>
                     </a>
                 </li>
 
                 <!-- PENGGUNA -->
                 <li class="nav-item">
-                    <a href="<?= base_url('dashboard/users') ?>" class="nav-link <?= strpos(uri_string(), 'users') !== false ? 'active' : '' ?>">
-                         <i class="nav-icon fas fa-user-shield"></i>
+                    <a href="<?= base_url('dashboard/users') ?>" class="nav-link <?= nav_active('users') ?>">
+                         <i class="nav-icon fas fa-users-cog"></i>
                          <p>Pengguna</p>
                     </a>
                 </li>
 
                 <!-- SETTINGS -->
                 <li class="nav-item">
-                    <a href="<?= base_url('dashboard/settings') ?>" class="nav-link <?= strpos(uri_string(), 'settings') !== false ? 'active' : '' ?>">
-                         <i class="nav-icon fas fa-cog"></i>
+                    <a href="<?= base_url('dashboard/settings') ?>" class="nav-link <?= nav_active('settings') ?>">
+                         <i class="nav-icon fas fa-sliders"></i>
                          <p>Settings</p>
                     </a>
                 </li>
 
                 <!-- ACTIVITY LOG -->
                 <li class="nav-item">
-                    <a href="<?= base_url('dashboard/activity-logs') ?>" class="nav-link <?= strpos(uri_string(), 'activity-logs') !== false ? 'active' : '' ?>">
-                         <i class="nav-icon fas fa-history"></i>
+                    <a href="<?= base_url('dashboard/activity-logs') ?>" class="nav-link <?= nav_active('activity-logs') ?>">
+                         <i class="nav-icon fas fa-clock"></i>
                          <p>Activity Log</p>
                     </a>
                 </li>
@@ -211,49 +214,5 @@
     </div>
 </aside>
 
-<style>
-/* Indent dropdown items */
-.nav-treeview .nav-link {
-    padding-left: 2.5rem !important;
-}
-
-.nav-treeview .nav-icon {
-    font-size: 0.8rem;
-    opacity: 0.7;
-}
-
-/* Fix dropdown when sidebar is collapsed */
-.sidebar-collapse .nav-treeview {
-    display: none !important;
-}
-
-.sidebar-collapse .nav-arrow {
-    display: none !important;
-}
-
-.sidebar-collapse .nav-item.menu-open > .nav-link {
-    background-color: transparent !important;
-}
-
-/* Show dropdown on hover when collapsed */
-.sidebar-collapse .nav-item:hover > .nav-treeview {
-    display: block !important;
-    position: fixed;
-    left: 60px;
-    background: var(--bs-body-bg);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 0.25rem;
-    padding: 0.5rem 0;
-    min-width: 200px;
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
-    z-index: 1050;
-}
-
-.sidebar-collapse .nav-item:hover > .nav-treeview .nav-link {
-    padding-left: 1rem !important;
-}
-
-.sidebar-collapse .nav-item:hover > .nav-treeview .nav-item {
-    width: 100%;
-}
-</style>
+<!-- Custom Sidebar JS -->
+<script src="<?= base_url('js/admin_sidebar.js') ?>"></script>

@@ -7,7 +7,7 @@
     <div class="alert alert-success"><?= session()->getFlashdata('message') ?></div>
 <?php endif; ?>
 
-<div class="card shadow mb-4">
+<div class="card shadow-sm mb-4">
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">

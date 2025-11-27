@@ -18,10 +18,10 @@
 <!-- Filter Component -->
 <?= $this->include('admin/partials/datatable_filters') ?>
 
-<div class="card shadow mb-4">
+<div class="card shadow-sm mb-4">
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover table-bordered">
+            <table class="table table-hover">
                 <thead>
                     <tr>
                         <th width="40">

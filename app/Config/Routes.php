@@ -37,6 +37,11 @@ $routes->group('dashboard', ['filter' => 'auth', 'namespace' => 'App\Controllers
     $routes->post('posts/bulk-delete', 'Posts::bulkDelete');
     $routes->post('posts/bulk-draft', 'Posts::bulkDraft');
     $routes->post('posts/bulk-publish', 'Posts::bulkPublish');
+    // Trash Routes
+    $routes->get('posts/trash', 'Posts::trash');
+    $routes->get('posts/restore/(:num)', 'Posts::restore/$1');
+    $routes->post('posts/bulk-restore', 'Posts::bulkRestore');
+    $routes->post('posts/bulk-force-delete', 'Posts::bulkForceDelete');
     // Media Routes
     $routes->get('media', 'Media::index');
     $routes->post('media/upload', 'Media::upload');

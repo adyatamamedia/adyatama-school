@@ -25,7 +25,7 @@
     <div class="row">
         <!-- Left Column (Main Content) -->
         <div class="col-md-8">
-            <div class="card shadow mb-4">
+            <div class="card shadow-sm mb-4">
                 <div class="card-body">
                     <!-- Row 1: Nama & NIP -->
                     <div class="row mb-3">
@@ -76,7 +76,7 @@
         <!-- Right Column (Sidebar) -->
         <div class="col-md-4">
             <!-- Status Card -->
-            <div class="card shadow mb-3">
+            <div class="card shadow-sm mb-3">
                 <div class="card-header bg-light">
                     <strong>Status</strong>
                 </div>
@@ -98,7 +98,7 @@
             </div>
 
             <!-- Foto Card -->
-            <div class="card shadow mb-3">
+            <div class="card shadow-sm mb-3">
                 <div class="card-header bg-light">
                     <strong>Foto Profil</strong>
                 </div>
@@ -122,7 +122,7 @@
             </div>
 
             <!-- Submit Button -->
-            <div class="card shadow mb-3">
+            <div class="card shadow-sm mb-3">
                 <div class="card-body">
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="fas fa-save me-1"></i>Update Data

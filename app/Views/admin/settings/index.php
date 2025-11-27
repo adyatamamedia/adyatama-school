@@ -32,7 +32,7 @@
         ];
         ?>
         
-        <div class="card shadow mb-4">
+        <div class="card shadow-sm mb-4">
             <div class="card-header p-0 border-bottom-0">
                 <ul class="nav nav-tabs" id="settingsTab" role="tablist" style="padding-top: 8px; padding-left: 16px;">
                     <?php $isActive = true; ?>

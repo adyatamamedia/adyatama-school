@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FontAwesome Icon Test</title>
+    
+    <!-- Font Awesome CDN (Same as in app) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/css/all.min.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .test-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .icon-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .icon-item i {
+            font-size: 20px;
+            margin-right: 10px;
+            color: #667eea;
+            width: 25px;
+            text-align: center;
+        }
+        
+        .icon-item span {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #764ba2;
+        }
+        
+        #console-output {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .sidebar-test {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+        }
+        
+        .sidebar-test .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-test .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .sidebar-test .nav-icon {
+            width: 20px;
+            min-width: 20px;
+            margin-right: 15px;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 FontAwesome Icon Diagnostic Tool</h1>
+        <p>Testing icons used in sidebar navigation</p>
+        
+        <!-- Status Check -->
+        <div class="test-section">
+            <h2>📊 Status Check</h2>
+            <div id="fa-status"></div>
+            <button onclick="checkFontAwesome()">Run Diagnostic</button>
+            <button onclick="testAllIcons()">Test All Icons</button>
+            <button onclick="clearConsole()">Clear Console</button>
+            <div id="console-output"></div>
+        </div>
+        
+        <!-- All Sidebar Icons -->
+        <div class="test-section">
+            <h2>📱 Sidebar Icons (dari admin_sidebar.php)</h2>
+            <div class="icon-grid" id="sidebar-icons"></div>
+        </div>
+        
+        <!-- Sidebar Simulation -->
+        <div class="test-section">
+            <h2>🎨 Sidebar Simulation</h2>
+            <div class="sidebar-test" id="sidebar-simulation"></div>
+        </div>
+        
+        <!-- Common Icons Test -->
+        <div class="test-section">
+            <h2>✅ Common Icons Test</h2>
+            <div class="icon-grid">
+                <div class="icon-item">
+                    <i class="fas fa-home"></i>
+                    <span>fa-home</span>
+                </div>
+                <div class="icon-item">
+                    <i class="fas fa-user"></i>
+                    <span>fa-user</span>
+                </div>
+                <div class="icon-item">
+                    <i class="fas fa-check"></i>
+                    <span>fa-check</span>
+                </div>
+                <div class="icon-item">
+                    <i class="fas fa-times"></i>
+                    <span>fa-times</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Sidebar icons (exact dari admin_sidebar.php)
+        const sidebarIcons = [
+            { class: 'fa-th-large', name: 'Dashboard' },
+            { class: 'fa-photo-video', name: 'Media Library' },
+            { class: 'fa-bookmark', name: 'Manajemen Terms' },
+            { class: 'fa-folder', name: 'Kategori' },
+            { class: 'fa-tag', name: 'Tags' },
+            { class: 'fa-futbol', name: 'Ekstrakurikuler' },
+            { class: 'fa-file-alt', name: 'Manajemen Artikel' },
+            { class: 'fa-list', name: 'Daftar Artikel' },
+            { class: 'fa-plus-circle', name: 'Buat Artikel' },
+            { class: 'fa-file-invoice', name: 'Manajemen Halaman' },
+            { class: 'fa-images', name: 'Manajemen Galeri' },
+            { class: 'fa-user-graduate', name: 'Pendaftaran' },
+            { class: 'fa-user-tie', name: 'Guru & Staff' },
+            { class: 'fa-comment-dots', name: 'Komentar' },
+            { class: 'fa-envelope-open-text', name: 'Subscriber Email' },
+            { class: 'fa-users-cog', name: 'Pengguna' },
+            { class: 'fa-sliders-h', name: 'Settings (OLD)' },
+            { class: 'fa-sliders', name: 'Settings (NEW)' },
+            { class: 'fa-clock', name: 'Activity Logs' },
+            { class: 'fa-chevron-right', name: 'Arrow' }
+        ];
+        
+        // Log to custom console
+        function log(message, type = 'info') {
+            const output = document.getElementById('console-output');
+            const time = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#ff4444' : type === 'success' ? '#00ff00' : '#00ccff';
+            output.innerHTML += `<div style="color: ${color}">[${time}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function clearConsole() {
+            document.getElementById('console-output').innerHTML = '';
+        }
+        
+        // Check FontAwesome loading
+        function checkFontAwesome() {
+            clearConsole();
+            log('=== FontAwesome Diagnostic Starting ===', 'info');
+            
+            // Check if stylesheets loaded
+            const stylesheets = document.styleSheets;
+            let faFound = false;
+            
+            log(`Total stylesheets: ${stylesheets.length}`, 'info');
+            
+            for (let i = 0; i < stylesheets.length; i++) {
+                const sheet = stylesheets[i];
+                if (sheet.href && (sheet.href.includes('font-awesome') || sheet.href.includes('fontawesome'))) {
+                    log(`✅ FontAwesome CSS found: ${sheet.href}`, 'success');
+                    faFound = true;
+                }
+            }
+            
+            if (!faFound) {
+                log('❌ FontAwesome CSS not found!', 'error');
+                document.getElementById('fa-status').innerHTML = 
+                    '<div class="status error">❌ FontAwesome CSS NOT LOADED</div>';
+                return;
+            }
+            
+            // Test icon rendering
+            const testIcon = document.createElement('i');
+            testIcon.className = 'fas fa-test-icon';
+            testIcon.style.fontSize = '0px';
+            document.body.appendChild(testIcon);
+            
+            const computed = window.getComputedStyle(testIcon, '::before');
+            const fontFamily = computed.fontFamily;
+            
+            document.body.removeChild(testIcon);
+            
+            log(`Font family: ${fontFamily}`, 'info');
+            
+            if (fontFamily.includes('Font Awesome') || fontFamily.includes('FontAwesome')) {
+                log('✅ FontAwesome font loaded successfully!', 'success');
+                document.getElementById('fa-status').innerHTML = 
+                    '<div class="status success">✅ FontAwesome LOADED SUCCESSFULLY<br>Font: ' + fontFamily + '</div>';
+            } else {
+                log('⚠️ FontAwesome font might not be loaded', 'error');
+                document.getElementById('fa-status').innerHTML = 
+                    '<div class="status warning">⚠️ FontAwesome CSS loaded but font might not be available<br>Font: ' + fontFamily + '</div>';
+            }
+            
+            // Count icons
+            const icons = document.querySelectorAll('.fas, .far, .fab, .fal');
+            log(`Total icons on page: ${icons.length}`, 'info');
+            
+            log('=== Diagnostic Complete ===', 'success');
+        }
+        
+        // Test all sidebar icons
+        function testAllIcons() {
+            clearConsole();
+            log('=== Testing All Sidebar Icons ===', 'info');
+            
+            sidebarIcons.forEach(icon => {
+                const testEl = document.createElement('i');
+                testEl.className = `fas ${icon.class}`;
+                testEl.style.fontSize = '20px';
+                document.body.appendChild(testEl);
+                
+                const computed = window.getComputedStyle(testEl, '::before');
+                const content = computed.content;
+                
+                if (content === 'none' || content === '""' || content === '') {
+                    log(`❌ ${icon.class} - NOT RENDERING`, 'error');
+                } else {
+                    log(`✅ ${icon.class} - OK (${content})`, 'success');
+                }
+                
+                document.body.removeChild(testEl);
+            });
+            
+            log('=== Test Complete ===', 'success');
+        }
+        
+        // Render sidebar icons grid
+        function renderSidebarIcons() {
+            const container = document.getElementById('sidebar-icons');
+            container.innerHTML = '';
+            
+            sidebarIcons.forEach(icon => {
+                const div = document.createElement('div');
+                div.className = 'icon-item';
+                div.innerHTML = `
+                    <i class="fas ${icon.class}"></i>
+                    <span>${icon.name}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        // Render sidebar simulation
+        function renderSidebarSimulation() {
+            const container = document.getElementById('sidebar-simulation');
+            container.innerHTML = '<h3 style="margin-bottom: 15px;">Menu Items</h3>';
+            
+            const mainIcons = [
+                { class: 'fa-th-large', name: 'Dashboard' },
+                { class: 'fa-photo-video', name: 'Media Library' },
+                { class: 'fa-bookmark', name: 'Manajemen Terms' },
+                { class: 'fa-file-alt', name: 'Manajemen Artikel' },
+                { class: 'fa-users-cog', name: 'Pengguna' }
+            ];
+            
+            mainIcons.forEach(icon => {
+                const link = document.createElement('a');
+                link.className = 'nav-link';
+                link.href = '#';
+                link.innerHTML = `
+                    <i class="nav-icon fas ${icon.class}"></i>
+                    <span>${icon.name}</span>
+                `;
+                container.appendChild(link);
+            });
+        }
+        
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', function() {
+            renderSidebarIcons();
+            renderSidebarSimulation();
+            
+            // Auto-run diagnostic after a short delay
+            setTimeout(() => {
+                log('Page loaded. FontAwesome should be available now.', 'info');
+                log('Click "Run Diagnostic" to check FontAwesome status.', 'info');
+            }, 500);
+        });
+    </script>
+</body>
+</html>
