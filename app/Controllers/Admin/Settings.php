@@ -39,184 +39,93 @@ class Settings extends BaseController
         // Remove CSRF token from processing
         unset($postData[csrf_token()]);
 
-        // Handle Legal Documents Upload (PDF/DOC files)
-        $legalKeys = ['sk_pendirian', 'izin_operasional', 'akreditasi', 'kurikulum'];
-        foreach ($legalKeys as $key) {
-            $file = $this->request->getFile($key);
-            if ($file && $file->isValid() && !$file->hasMoved()) {
-                // Validate file type and size
-                $allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-                if (!in_array($file->getMimeType(), $allowedTypes)) {
-                    session()->setFlashdata('error', 'Invalid file type for ' . $key . '. Only PDF and DOC files are allowed.');
-                    continue;
-                }
+        // 1. Handle File Uploads (Images & Documents)
+        $files = $this->request->getFiles();
+        
+        if ($files) {
+            foreach ($files as $key => $file) {
+                if ($file->isValid() && !$file->hasMoved()) {
+                    // Determine upload path and validation based on key or file type
+                    $uploadPath = 'uploads/settings'; // Default path
+                    $allowedTypes = [];
+                    $maxSize = 2 * 1024 * 1024; // Default 2MB
 
-                if ($file->getSize() > 5 * 1024 * 1024) { // 5MB
-                    session()->setFlashdata('error', 'File size too large for ' . $key . '. Maximum size is 5MB.');
-                    continue;
-                }
-
-                // Create directory if not exists
-                if (!is_dir(FCPATH . 'uploads/legal-docs')) {
-                    mkdir(FCPATH . 'uploads/legal-docs', 0755, true);
-                }
-
-                // Generate safe filename
-                $newName = $key . '_' . time() . '.' . $file->getExtension();
-
-                if ($file->move(FCPATH . 'uploads/legal-docs', $newName)) {
-                    // Delete old file if exists
-                    $setting = $this->settingModel->where('key_name', $key)->first();
-                    if ($setting && !empty($setting->value) && file_exists(FCPATH . $setting->value)) {
-                        unlink(FCPATH . $setting->value);
+                    // Check if it's a legal document
+                    if (in_array($key, ['sk_pendirian', 'izin_operasional', 'akreditasi', 'kurikulum', 'legalitas_lain', 'academic_calendar_url'])) {
+                        $uploadPath = 'uploads/legal-docs';
+                        $allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                        $maxSize = 10 * 1024 * 1024; // 10MB for docs
+                    } 
+                    // Check if it's an image
+                    elseif (in_array($key, ['site_logo', 'site_favicon', 'og_image', 'hero_bg_image'])) {
+                        $uploadPath = 'uploads/settings';
+                        $allowedTypes = ['image/x-icon', 'image/vnd.microsoft.icon', 'image/ico', 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                        $maxSize = ($key === 'site_favicon') ? 1 * 1024 * 1024 : 5 * 1024 * 1024;
+                    } else {
+                        // Unknown file key, skip or handle generically
+                        continue;
                     }
 
-                    // Update database with new file path
-                    $this->settingModel->updateOrCreate($key, 'uploads/legal-docs/' . $newName);
-                }
-            }
-        }
-
-        // Handle Image Uploads (favicon, logo, og_image)
-        $imageKeys = ['site_favicon', 'site_logo', 'og_image'];
-        foreach ($imageKeys as $key) {
-            $file = $this->request->getFile($key);
-            if ($file && $file->isValid() && !$file->hasMoved()) {
-                // Validate file type and size
-                $allowedTypes = ['image/x-icon', 'image/vnd.microsoft.icon', 'image/ico', 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                if (!in_array($file->getMimeType(), $allowedTypes)) {
-                    session()->setFlashdata('error', 'Invalid file type for ' . $key . '. Only image files are allowed.');
-                    continue;
-                }
-
-                // Different size limits for different images
-                $maxSize = ($key === 'site_favicon') ? 1 * 1024 * 1024 : 2 * 1024 * 1024; // 1MB for favicon, 2MB for others
-                if ($file->getSize() > $maxSize) {
-                    session()->setFlashdata('error', 'File size too large for ' . $key . '. Maximum size is ' . ($maxSize / 1024 / 1024) . 'MB.');
-                    continue;
-                }
-
-                // Create directory if not exists
-                if (!is_dir(FCPATH . 'uploads/settings')) {
-                    mkdir(FCPATH . 'uploads/settings', 0755, true);
-                }
-
-                // Generate safe filename
-                $newName = $key . '_' . time() . '.' . $file->getExtension();
-
-                if ($file->move(FCPATH . 'uploads/settings', $newName)) {
-                    // Delete old file if exists
-                    $setting = $this->settingModel->where('key_name', $key)->first();
-                    if ($setting && !empty($setting->value) && file_exists(FCPATH . $setting->value)) {
-                        unlink(FCPATH . $setting->value);
+                    // Validate Mime Type
+                    if (!empty($allowedTypes) && !in_array($file->getMimeType(), $allowedTypes)) {
+                        session()->setFlashdata('error', "Invalid file type for $key.");
+                        continue;
                     }
 
-                    // Update database with new file path
-                    $this->settingModel->updateOrCreate($key, 'uploads/settings/' . $newName);
+                    // Validate Size
+                    if ($file->getSize() > $maxSize) {
+                        session()->setFlashdata('error', "File size too large for $key.");
+                        continue;
+                    }
+
+                    // Ensure directory exists
+                    if (!is_dir(FCPATH . $uploadPath)) {
+                        mkdir(FCPATH . $uploadPath, 0755, true);
+                    }
+
+                    // Generate filename
+                    $newName = $key . '_' . time() . '.' . $file->getExtension();
+
+                    // Move file
+                    if ($file->move(FCPATH . $uploadPath, $newName)) {
+                        // Delete old file
+                        $existing = $this->settingModel->where('key_name', $key)->first();
+                        if ($existing && !empty($existing->value) && file_exists(FCPATH . $existing->value)) {
+                            unlink(FCPATH . $existing->value);
+                        }
+
+                        // Update database
+                        if ($existing) {
+                            $this->settingModel->update($existing->id, ['value' => $uploadPath . '/' . $newName]);
+                        } else {
+                            $this->settingModel->insert([
+                                'key_name' => $key,
+                                'value' => $uploadPath . '/' . $newName,
+                                'type' => 'file',
+                                'group_name' => 'general'
+                            ]);
+                        }
+                    }
                 }
             }
         }
 
-        // Update text fields (excluding handled fields above)
+        // 2. Handle Text/Boolean/Other Fields
         foreach ($postData as $key => $value) {
-            if (!in_array($key, array_merge($legalKeys, $imageKeys, ['whatsapp_number', 'whatsapp_message', 'school_address', 'meta_description', 'meta_keywords', 'google_analytics', 'primary_color', 'maps_embed_url', 'maps_embed_iframe', 'instagram_url', 'facebook_url', 'youtube_url', 'tiktok_url']))) {
-                $this->settingModel->updateOrCreate($key, $value);
-            }
-        }
+            $existing = $this->settingModel->where('key_name', $key)->first();
 
-        // Return appropriate message
-        if (!empty(session()->getFlashdata('error'))) {
-            return redirect()->to('/dashboard/settings')->with('error', session()->getFlashdata('error'));
-        }
-
-        return redirect()->to('/dashboard/settings')->with('message', 'Settings updated successfully.');
-
-        // Update text fields (including new enhanced fields)
-        foreach ($postData as $key => $value) {
-            if (!in_array($key, array_merge($legalKeys, $imageKeys))) {
-                // Handle new field types
-                if ($key === 'primary_color') {
-                    $this->settingModel->updateOrCreate($key, $value, 'color', 'visual_identity');
-                } elseif ($key === 'maps_embed_url') {
-                    $this->settingModel->updateOrCreate($key, $value, 'url', 'location_config');
-                } elseif ($key === 'maps_embed_iframe') {
-                    $this->settingModel->updateOrCreate($key, $value, 'textarea', 'location_config');
-                } elseif (in_array($key, ['whatsapp_number', 'whatsapp_message'])) {
-                    $this->settingModel->updateOrCreate($key, $value, 'tel', 'contact_info');
-                } elseif ($key === 'school_address') {
-                    $this->settingModel->updateOrCreate($key, $value, 'textarea', 'contact_info');
-                } elseif ($key === 'meta_description') {
-                    $this->settingModel->updateOrCreate($key, $value, 'textarea', 'seo_config');
-                } elseif ($key === 'meta_keywords') {
-                    $this->settingModel->updateOrCreate($key, $value, 'textarea', 'seo_config');
-                } elseif ($key === 'google_analytics') {
-                    $this->settingModel->updateOrCreate($key, $value, 'textarea', 'seo_config');
-                } elseif (in_array($key, ['instagram_url', 'facebook_url', 'youtube_url', 'tiktok_url'])) {
-                    $this->settingModel->updateOrCreate($key, $value, 'url', 'social_media');
-                } else {
-                    $this->settingModel->updateOrCreate($key, $value);
-                }
-            }
-        }
-
-        $errors = [];
-        $successCount = 0;
-
-        foreach ($imageSettings as $setting) {
-            $file = $this->request->getFile($setting->key_name);
-
-            // Check if file was uploaded and is valid
-            if ($file && $file->isValid() && !$file->hasMoved() && $file->getSize() > 0) {
-                // Check file size (max 5MB)
-                if ($file->getSize() > 5 * 1024 * 1024) {
-                    $errors[] = 'File size too large for ' . $setting->key_name . '. Maximum size is 5MB.';
-                    continue;
-                }
-
-                // Check file type
-                $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                if (!in_array($file->getMimeType(), $allowedTypes)) {
-                    $errors[] = 'Invalid file type for ' . $setting->key_name . '. Only JPG, PNG, GIF, and WebP are allowed.';
-                    continue;
-                }
-
-                // Delete old file if it exists
-                if (!empty($setting->value) && file_exists(FCPATH . $setting->value)) {
-                    unlink(FCPATH . $setting->value);
-                }
-
-                // Create directory if not exists
-                if (!is_dir(FCPATH . 'uploads/settings')) {
-                    mkdir(FCPATH . 'uploads/settings', 0755, true);
-                }
-
-                $newName = $file->getRandomName();
-
-                if ($file->move(FCPATH . 'uploads/settings', $newName)) {
-                    // Update the database with new file path
-                    $this->settingModel->update($setting->id, ['value' => 'uploads/settings/' . $newName]);
-                    $successCount++;
-                } else {
-                    $errors[] = 'Failed to upload ' . $setting->key_name . '. Please try again.';
-                }
-            } elseif ($file && !$file->isValid()) {
-                // Log upload errors for debugging
-                $errorMessage = $file->getErrorString();
-                log_message('error', "File upload error for {$setting->key_name}: " . $errorMessage);
-                $errors[] = "Upload error for {$setting->key_name}: " . $errorMessage;
-            }
-        }
-
-        // Return appropriate message
-        if (!empty($errors)) {
-            if ($successCount > 0) {
-                $message = "Successfully uploaded {$successCount} file(s), but some errors occurred: " . implode('; ', $errors);
-                return redirect()->to('/dashboard/settings')->with('warning', $message);
+            if ($existing) {
+                // Only update the value!
+                $this->settingModel->update($existing->id, ['value' => $value]);
             } else {
-                return redirect()->to('/dashboard/settings')->with('error', implode('; ', $errors));
+                // If it's a new setting not in DB, insert it
+                $this->settingModel->insert([
+                    'key_name' => $key,
+                    'value' => $value,
+                    'type' => 'text',
+                    'group_name' => 'general'
+                ]);
             }
-        } elseif ($successCount > 0) {
-            return redirect()->to('/dashboard/settings')->with('message', "Successfully uploaded {$successCount} file(s).");
         }
 
         return redirect()->to('/dashboard/settings')->with('message', 'Settings updated successfully.');
@@ -250,53 +159,262 @@ class Settings extends BaseController
 
     public function seedDefaults()
     {
-        // Check if enhanced settings already exist
-        if ($this->settingModel->where('key_name', 'site_slogan')->first()) {
-            return redirect()->to('/dashboard/settings')->with('error', 'Enhanced settings already seeded.');
-        }
-
         $defaults = [
-            // Visual Identity
+            // ===== GENERAL =====
+            ['key_name' => 'site_title', 'value' => 'Adyatama School', 'type' => 'text', 'group_name' => 'general', 'description' => 'Judul Website'],
+            ['key_name' => 'site_tagline', 'value' => 'Berkarakter, Berkualitas, Berprestasi', 'type' => 'text', 'group_name' => 'general', 'description' => 'Tagline Website'],
+            ['key_name' => 'site_description', 'value' => 'Sekolah Islam Terpadu yang mengutamakan pendidikan karakter dan prestasi akademik', 'type' => 'textarea', 'group_name' => 'general', 'description' => 'Deskripsi Singkat Sekolah'],
+            ['key_name' => 'timezone', 'value' => 'Asia/Jakarta', 'type' => 'text', 'group_name' => 'general', 'description' => 'Zona Waktu'],
+            ['key_name' => 'language', 'value' => 'id', 'type' => 'text', 'group_name' => 'general', 'description' => 'Bahasa Default (id/en)'],
+            ['key_name' => 'date_format', 'value' => 'd-m-Y', 'type' => 'text', 'group_name' => 'general', 'description' => 'Format Tanggal'],
+            
+            // ===== VISUAL IDENTITY =====
             ['key_name' => 'site_name', 'value' => 'Adyatama School', 'type' => 'text', 'group_name' => 'visual_identity', 'description' => 'Nama Sekolah'],
             ['key_name' => 'site_slogan', 'value' => 'Berkarakter, Berkualitas, Berprestasi', 'type' => 'text', 'group_name' => 'visual_identity', 'description' => 'Tagline/Motto Sekolah'],
-            ['key_name' => 'site_logo', 'value' => '', 'type' => 'image', 'group_name' => 'visual_identity', 'description' => 'Logo Utama Website (disarankan PNG)'],
+            ['key_name' => 'site_logo', 'value' => '', 'type' => 'image', 'group_name' => 'visual_identity', 'description' => 'Logo Utama Website (PNG)'],
             ['key_name' => 'site_favicon', 'value' => '', 'type' => 'image', 'group_name' => 'visual_identity', 'description' => 'Favicon Website (ICO/PNG 32x32)'],
             ['key_name' => 'og_image', 'value' => '', 'type' => 'image', 'group_name' => 'visual_identity', 'description' => 'Default OG Image (1200x630px)'],
             ['key_name' => 'primary_color', 'value' => '#0ea5e9', 'type' => 'color', 'group_name' => 'visual_identity', 'description' => 'Warna Primer Website'],
+            ['key_name' => 'hero_bg_image', 'value' => '', 'type' => 'image', 'group_name' => 'visual_identity', 'description' => 'Background Hero Section'],
 
-            // Contact Information
+            // ===== CONTACT INFO =====
             ['key_name' => 'school_name', 'value' => 'Yayasan Adyatama', 'type' => 'text', 'group_name' => 'contact_info', 'description' => 'Nama Lembaga Resmi'],
             ['key_name' => 'school_email', 'value' => 'info@adyatama.sch.id', 'type' => 'email', 'group_name' => 'contact_info', 'description' => 'Email Umum'],
             ['key_name' => 'school_phone', 'value' => '(021) 123456789', 'type' => 'tel', 'group_name' => 'contact_info', 'description' => 'Telepon Kantor'],
             ['key_name' => 'school_address', 'value' => 'Jl. Pendidikan No. 123, Jakarta Selatan', 'type' => 'textarea', 'group_name' => 'contact_info', 'description' => 'Alamat Lengkap'],
             ['key_name' => 'whatsapp_number', 'value' => '+628123456789', 'type' => 'tel', 'group_name' => 'contact_info', 'description' => 'Nomor WhatsApp (format: +62xxx)'],
             ['key_name' => 'whatsapp_message', 'value' => 'Halo Admin Adyatama School, saya ingin bertanya tentang...', 'type' => 'textarea', 'group_name' => 'contact_info', 'description' => 'Pesan Default WhatsApp'],
+            ['key_name' => 'latitude', 'value' => '-6.2088', 'type' => 'text', 'group_name' => 'contact_info', 'description' => 'Latitude Lokasi'],
+            ['key_name' => 'longitude', 'value' => '106.8456', 'type' => 'text', 'group_name' => 'contact_info', 'description' => 'Longitude Lokasi'],
+            ['key_name' => 'maps_embed_url', 'value' => '', 'type' => 'url', 'group_name' => 'contact_info', 'description' => 'Link Google Maps'],
 
-            // Location & Maps
-            ['key_name' => 'maps_embed_url', 'value' => '', 'type' => 'url', 'group_name' => 'location_config', 'description' => 'Link Embed Google Maps (copy paste dari Google Maps)'],
-            ['key_name' => 'maps_embed_iframe', 'value' => '', 'type' => 'textarea', 'group_name' => 'location_config', 'description' => 'Embed Iframe Code Google Maps'],
+            // ===== ADMISSION INFO =====
+            ['key_name' => 'registration_status', 'value' => 'open', 'type' => 'text', 'group_name' => 'admission_info', 'description' => 'Status Pendaftaran (open/closed)'],
+            ['key_name' => 'registration_period', 'value' => 'Januari - Juli 2025', 'type' => 'text', 'group_name' => 'admission_info', 'description' => 'Periode Pendaftaran'],
+            ['key_name' => 'admission_deadline', 'value' => '2025-07-31', 'type' => 'date', 'group_name' => 'admission_info', 'description' => 'Deadline Pendaftaran'],
+            ['key_name' => 'registration_fee', 'value' => 'Rp 500.000', 'type' => 'text', 'group_name' => 'admission_info', 'description' => 'Biaya Pendaftaran'],
+            ['key_name' => 'annual_fee', 'value' => 'Rp 12.000.000', 'type' => 'text', 'group_name' => 'admission_info', 'description' => 'Biaya Tahunan'],
+            ['key_name' => 'min_age', 'value' => '5', 'type' => 'number', 'group_name' => 'admission_info', 'description' => 'Minimal Usia Pendaftaran'],
+            ['key_name' => 'max_age', 'value' => '18', 'type' => 'number', 'group_name' => 'admission_info', 'description' => 'Maksimal Usia Pendaftaran'],
+            ['key_name' => 'admission_procedure', 'value' => "1. Isi formulir online\n2. Upload dokumen persyaratan\n3. Bayar biaya pendaftaran\n4. Tes masuk\n5. Pengumuman", 'type' => 'textarea', 'group_name' => 'admission_info', 'description' => 'Prosedur Pendaftaran'],
+            ['key_name' => 'additional_documents', 'value' => "- Fotocopy Akta Kelahiran\n- Fotocopy Kartu Keluarga\n- Pas Foto 3x4 (3 lembar)\n- Rapor terakhir", 'type' => 'textarea', 'group_name' => 'admission_info', 'description' => 'Dokumen yang Diperlukan'],
 
-            // Legal Documents
-            ['key_name' => 'sk_pendirian', 'value' => '', 'type' => 'file', 'group_name' => 'legal_documents', 'description' => 'SK Pendirian Yayasan (PDF/DOC)'],
-            ['key_name' => 'izin_operasional', 'value' => '', 'type' => 'file', 'group_name' => 'legal_documents', 'description' => 'Izin Operasional Sekolah (PDF/DOC)'],
-            ['key_name' => 'akreditasi', 'value' => '', 'type' => 'file', 'group_name' => 'legal_documents', 'description' => 'Sertifikat Akreditasi (PDF/JPG)'],
-            ['key_name' => 'kurikulum', 'value' => '', 'type' => 'file', 'group_name' => 'legal_documents', 'description' => 'Ijin Kurikulum (PDF/DOC)'],
-            ['key_name' => 'legalitas_lain', 'value' => '', 'type' => 'textarea', 'group_name' => 'legal_documents', 'description' => 'Legalitas Lainnya (deskripsi saja)'],
-
-            // Social Media
+            // ===== SOCIAL MEDIA =====
             ['key_name' => 'instagram_url', 'value' => 'https://instagram.com/adyatamaschool', 'type' => 'url', 'group_name' => 'social_media', 'description' => 'Instagram URL'],
             ['key_name' => 'facebook_url', 'value' => 'https://facebook.com/adyatamaschool', 'type' => 'url', 'group_name' => 'social_media', 'description' => 'Facebook Page URL'],
             ['key_name' => 'youtube_url', 'value' => 'https://youtube.com/@adyatamaschool', 'type' => 'url', 'group_name' => 'social_media', 'description' => 'YouTube Channel URL'],
             ['key_name' => 'tiktok_url', 'value' => 'https://tiktok.com/@adyatamaschool', 'type' => 'url', 'group_name' => 'social_media', 'description' => 'TikTok URL'],
+            ['key_name' => 'twitter_url', 'value' => '', 'type' => 'url', 'group_name' => 'social_media', 'description' => 'Twitter/X URL'],
+            ['key_name' => 'social_media_widget', 'value' => '1', 'type' => 'boolean', 'group_name' => 'social_media', 'description' => 'Tampilkan Widget Social Media'],
 
-            // SEO Configuration
-            ['key_name' => 'meta_description', 'value' => 'Sekolah Islam Terpadu Adyatama School - Berkarakter, Berkualitas, Berprestasi', 'type' => 'textarea', 'group_name' => 'seo_config', 'description' => 'Deskripsi Website (max 160 karakter)'],
-            ['key_name' => 'meta_keywords', 'value' => 'sekolah, pendidikan, islam, adyatama, tk, sd, smp, sma', 'type' => 'textarea', 'group_name' => 'seo_config', 'description' => 'Keywords (dipisah dengan koma)'],
+            // ===== LEGAL DOCUMENTS =====
+            ['key_name' => 'sk_pendirian', 'value' => '', 'type' => 'file', 'group_name' => 'legal_documents', 'description' => 'SK Pendirian Yayasan (PDF/DOC)'],
+            ['key_name' => 'izin_operasional', 'value' => '', 'type' => 'file', 'group_name' => 'legal_documents', 'description' => 'Izin Operasional Sekolah (PDF/DOC)'],
+            ['key_name' => 'akreditasi', 'value' => '', 'type' => 'file', 'group_name' => 'legal_documents', 'description' => 'Sertifikat Akreditasi (PDF/JPG)'],
+            ['key_name' => 'kurikulum', 'value' => '', 'type' => 'file', 'group_name' => 'legal_documents', 'description' => 'Ijin Kurikulum (PDF/DOC)'],
+            ['key_name' => 'npsn', 'value' => '', 'type' => 'text', 'group_name' => 'legal_documents', 'description' => 'Nomor Pokok Sekolah Nasional'],
+            ['key_name' => 'nss', 'value' => '', 'type' => 'text', 'group_name' => 'legal_documents', 'description' => 'Nomor Statistik Sekolah'],
+            ['key_name' => 'privacy_policy', 'value' => '', 'type' => 'textarea', 'group_name' => 'legal_documents', 'description' => 'Kebijakan Privasi'],
+            ['key_name' => 'terms_of_service', 'value' => '', 'type' => 'textarea', 'group_name' => 'legal_documents', 'description' => 'Syarat dan Ketentuan'],
+
+            // ===== SEO CONFIG =====
+            ['key_name' => 'meta_description', 'value' => 'Sekolah Islam Terpadu Adyatama School - Berkarakter, Berkualitas, Berprestasi', 'type' => 'textarea', 'group_name' => 'seo_config', 'description' => 'Meta Description (max 160 karakter)'],
+            ['key_name' => 'meta_keywords', 'value' => 'sekolah, pendidikan, islam, adyatama, tk, sd, smp, sma', 'type' => 'textarea', 'group_name' => 'seo_config', 'description' => 'Meta Keywords (dipisah koma)'],
             ['key_name' => 'google_analytics', 'value' => '', 'type' => 'textarea', 'group_name' => 'seo_config', 'description' => 'Google Analytics Tracking Code'],
+            ['key_name' => 'robots_txt', 'value' => "User-agent: *\nAllow: /", 'type' => 'textarea', 'group_name' => 'seo_config', 'description' => 'Konten robots.txt'],
+            ['key_name' => 'sitemap_enabled', 'value' => '1', 'type' => 'boolean', 'group_name' => 'seo_config', 'description' => 'Aktifkan Sitemap XML'],
+
+            // ===== EMAIL CONFIG =====
+            ['key_name' => 'smtp_host', 'value' => 'smtp.gmail.com', 'type' => 'text', 'group_name' => 'email_config', 'description' => 'SMTP Host'],
+            ['key_name' => 'smtp_port', 'value' => '587', 'type' => 'number', 'group_name' => 'email_config', 'description' => 'SMTP Port'],
+            ['key_name' => 'smtp_username', 'value' => '', 'type' => 'text', 'group_name' => 'email_config', 'description' => 'SMTP Username'],
+            ['key_name' => 'smtp_password', 'value' => '', 'type' => 'text', 'group_name' => 'email_config', 'description' => 'SMTP Password'],
+            ['key_name' => 'smtp_encryption', 'value' => 'tls', 'type' => 'text', 'group_name' => 'email_config', 'description' => 'SMTP Encryption (tls/ssl)'],
+            ['key_name' => 'email_from', 'value' => 'noreply@adyatama.sch.id', 'type' => 'email', 'group_name' => 'email_config', 'description' => 'Email Pengirim'],
+            ['key_name' => 'email_from_name', 'value' => 'Adyatama School', 'type' => 'text', 'group_name' => 'email_config', 'description' => 'Nama Pengirim'],
+            ['key_name' => 'email_notifications', 'value' => '1', 'type' => 'boolean', 'group_name' => 'email_config', 'description' => 'Aktifkan Notifikasi Email'],
+            ['key_name' => 'application_notification', 'value' => '1', 'type' => 'boolean', 'group_name' => 'email_config', 'description' => 'Notifikasi Pendaftaran Baru'],
+            ['key_name' => 'comment_notification', 'value' => '1', 'type' => 'boolean', 'group_name' => 'email_config', 'description' => 'Notifikasi Komentar Baru'],
+
+            // ===== SECURITY =====
+            ['key_name' => 'recaptcha_enabled', 'value' => '0', 'type' => 'boolean', 'group_name' => 'security', 'description' => 'Aktifkan reCAPTCHA'],
+            ['key_name' => 'recaptcha_site_key', 'value' => '', 'type' => 'text', 'group_name' => 'security', 'description' => 'reCAPTCHA Site Key'],
+            ['key_name' => 'recaptcha_secret_key', 'value' => '', 'type' => 'text', 'group_name' => 'security', 'description' => 'reCAPTCHA Secret Key'],
+            ['key_name' => 'max_login_attempts', 'value' => '5', 'type' => 'number', 'group_name' => 'security', 'description' => 'Maksimal Percobaan Login'],
+            ['key_name' => 'login_lockout_time', 'value' => '900', 'type' => 'number', 'group_name' => 'security', 'description' => 'Durasi Lockout (detik)'],
+            ['key_name' => 'gdpr_compliance', 'value' => '1', 'type' => 'boolean', 'group_name' => 'security', 'description' => 'Aktifkan GDPR Compliance'],
+            ['key_name' => 'cookie_consent', 'value' => '1', 'type' => 'boolean', 'group_name' => 'security', 'description' => 'Tampilkan Cookie Consent'],
+            ['key_name' => 'data_retention_days', 'value' => '365', 'type' => 'number', 'group_name' => 'security', 'description' => 'Lama Retensi Data (hari)'],
+
+            // ===== ACADEMIC CALENDAR =====
+            ['key_name' => 'academic_year', 'value' => '2024/2025', 'type' => 'text', 'group_name' => 'academic_calendar', 'description' => 'Tahun Ajaran'],
+            ['key_name' => 'semester', 'value' => 'Ganjil', 'type' => 'text', 'group_name' => 'academic_calendar', 'description' => 'Semester Aktif'],
+            ['key_name' => 'academic_calendar_url', 'value' => '', 'type' => 'file', 'group_name' => 'academic_calendar', 'description' => 'File Kalender Akademik (PDF)'],
+            ['key_name' => 'holidays_schedule', 'value' => "17-08-2025 Hari Kemerdekaan\n25-12-2025 Natal", 'type' => 'textarea', 'group_name' => 'academic_calendar', 'description' => 'Jadwal Libur'],
+            ['key_name' => 'exam_schedule', 'value' => '', 'type' => 'textarea', 'group_name' => 'academic_calendar', 'description' => 'Jadwal Ujian'],
+            ['key_name' => 'event_announcement', 'value' => '', 'type' => 'textarea', 'group_name' => 'academic_calendar', 'description' => 'Pengumuman Event'],
+            ['key_name' => 'upcoming_events', 'value' => '', 'type' => 'textarea', 'group_name' => 'academic_calendar', 'description' => 'Event Mendatang'],
+
+            // ===== WEBSITE BEHAVIOR =====
+            ['key_name' => 'maintenance_mode', 'value' => '0', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Mode Maintenance'],
+            ['key_name' => 'maintenance_message', 'value' => 'Website sedang dalam perbaikan. Mohon kembali lagi nanti.', 'type' => 'textarea', 'group_name' => 'website_behavior', 'description' => 'Pesan Maintenance'],
+            ['key_name' => 'posts_per_page', 'value' => '12', 'type' => 'number', 'group_name' => 'website_behavior', 'description' => 'Jumlah Post per Halaman'],
+            ['key_name' => 'galleries_per_page', 'value' => '12', 'type' => 'number', 'group_name' => 'website_behavior', 'description' => 'Jumlah Galeri per Halaman'],
+            ['key_name' => 'search_results_per_page', 'value' => '10', 'type' => 'number', 'group_name' => 'website_behavior', 'description' => 'Hasil Pencarian per Halaman'],
+            ['key_name' => 'enable_search', 'value' => '1', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Aktifkan Fitur Pencarian'],
+            ['key_name' => 'enable_sharing', 'value' => '1', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Aktifkan Tombol Share'],
+            ['key_name' => 'enable_reactions', 'value' => '1', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Aktifkan Reaksi Emoji'],
+            ['key_name' => 'guest_comment', 'value' => '0', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Izinkan Komentar Tamu'],
+            ['key_name' => 'auto_approve_comments', 'value' => '0', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Auto Approve Komentar'],
+            ['key_name' => 'comment_captcha', 'value' => '1', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Captcha untuk Komentar'],
+            ['key_name' => 'cdn_enabled', 'value' => '0', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Gunakan CDN'],
+            ['key_name' => 'minify_html', 'value' => '0', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Minify HTML Output'],
+
+            // ===== PAYMENT CONFIG =====
+            ['key_name' => 'payment_enabled', 'value' => '1', 'type' => 'boolean', 'group_name' => 'payment_config', 'description' => 'Aktifkan Payment Gateway'],
+            ['key_name' => 'payment_method', 'value' => 'manual_transfer', 'type' => 'text', 'group_name' => 'payment_config', 'description' => 'Metode Pembayaran Default'],
+            ['key_name' => 'bank_name', 'value' => 'Bank Mandiri', 'type' => 'text', 'group_name' => 'payment_config', 'description' => 'Nama Bank'],
+            ['key_name' => 'bank_account_name', 'value' => 'Yayasan Adyatama', 'type' => 'text', 'group_name' => 'payment_config', 'description' => 'Nama Pemilik Rekening'],
+            ['key_name' => 'bank_account_number', 'value' => '1234567890', 'type' => 'text', 'group_name' => 'payment_config', 'description' => 'Nomor Rekening'],
+            ['key_name' => 'midtrans_server_key', 'value' => '', 'type' => 'text', 'group_name' => 'payment_config', 'description' => 'Midtrans Server Key'],
+            ['key_name' => 'midtrans_client_key', 'value' => '', 'type' => 'text', 'group_name' => 'payment_config', 'description' => 'Midtrans Client Key'],
+            ['key_name' => 'midtrans_is_production', 'value' => '0', 'type' => 'boolean', 'group_name' => 'payment_config', 'description' => 'Midtrans Production Mode'],
+            ['key_name' => 'donation_enabled', 'value' => '1', 'type' => 'boolean', 'group_name' => 'payment_config', 'description' => 'Aktifkan Fitur Donasi'],
+            ['key_name' => 'donation_message', 'value' => 'Dukung pendidikan berkualitas di Adyatama School', 'type' => 'textarea', 'group_name' => 'payment_config', 'description' => 'Pesan Donasi'],
+
+            // ===== ACADEMIC INFO =====
+            ['key_name' => 'school_vision', 'value' => 'Menjadi lembaga pendidikan Islam terpadu yang unggul dalam prestasi dan berakhlak mulia', 'type' => 'textarea', 'group_name' => 'academic_info', 'description' => 'Visi Sekolah'],
+            ['key_name' => 'school_mission', 'value' => "1. Menyelenggarakan pendidikan berkualitas\n2. Membentuk karakter Islami\n3. Mengembangkan potensi siswa", 'type' => 'textarea', 'group_name' => 'academic_info', 'description' => 'Misi Sekolah'],
+            ['key_name' => 'curriculum', 'value' => 'Kurikulum Merdeka dengan pendekatan Islam Terpadu', 'type' => 'textarea', 'group_name' => 'academic_info', 'description' => 'Kurikulum'],
+            ['key_name' => 'accreditation', 'value' => 'A', 'type' => 'text', 'group_name' => 'academic_info', 'description' => 'Akreditasi'],
+            ['key_name' => 'total_students', 'value' => '500', 'type' => 'number', 'group_name' => 'academic_info', 'description' => 'Jumlah Siswa'],
+            ['key_name' => 'total_teachers', 'value' => '50', 'type' => 'number', 'group_name' => 'academic_info', 'description' => 'Jumlah Guru'],
+            ['key_name' => 'total_classes', 'value' => '24', 'type' => 'number', 'group_name' => 'academic_info', 'description' => 'Jumlah Kelas'],
+            ['key_name' => 'facilities', 'value' => "- Laboratorium Komputer\n- Perpustakaan\n- Masjid\n- Lapangan Olahraga\n- Kantin", 'type' => 'textarea', 'group_name' => 'academic_info', 'description' => 'Fasilitas Sekolah'],
         ];
 
-        $this->settingModel->insertBatch($defaults);
+        // Smart insertion - only insert settings that don't exist yet
+        $inserted = 0;
+        $skipped = 0;
+        
+        foreach ($defaults as $setting) {
+            $existing = $this->settingModel->where('key_name', $setting['key_name'])->first();
+            if (!$existing) {
+                $this->settingModel->insert($setting);
+                $inserted++;
+            } else {
+                $skipped++;
+            }
+        }
 
-        return redirect()->to('/dashboard/settings')->with('message', 'Enhanced default settings seeded successfully.');
+        if ($inserted > 0) {
+            return redirect()->to('/dashboard/settings')->with('message', "Successfully added {$inserted} new settings. {$skipped} settings already exist.");
+        } else {
+            return redirect()->to('/dashboard/settings')->with('error', 'All settings already exist. No new settings added.');
+        }
+    }
+
+    public function addMissingGroups()
+    {
+        // This method adds only the missing groups without touching existing data
+        $allDefaults = [
+            // ===== GENERAL =====
+            ['key_name' => 'site_title', 'value' => 'Adyatama School', 'type' => 'text', 'group_name' => 'general', 'description' => 'Judul Website'],
+            ['key_name' => 'site_tagline', 'value' => 'Berkarakter, Berkualitas, Berprestasi', 'type' => 'text', 'group_name' => 'general', 'description' => 'Tagline Website'],
+            ['key_name' => 'site_description', 'value' => 'Sekolah Islam Terpadu yang mengutamakan pendidikan karakter dan prestasi akademik', 'type' => 'textarea', 'group_name' => 'general', 'description' => 'Deskripsi Singkat Sekolah'],
+            ['key_name' => 'timezone', 'value' => 'Asia/Jakarta', 'type' => 'text', 'group_name' => 'general', 'description' => 'Zona Waktu'],
+            ['key_name' => 'language', 'value' => 'id', 'type' => 'text', 'group_name' => 'general', 'description' => 'Bahasa Default (id/en)'],
+            ['key_name' => 'date_format', 'value' => 'd-m-Y', 'type' => 'text', 'group_name' => 'general', 'description' => 'Format Tanggal'],
+            
+            // ===== ADMISSION INFO =====
+            ['key_name' => 'registration_status', 'value' => 'open', 'type' => 'text', 'group_name' => 'admission_info', 'description' => 'Status Pendaftaran (open/closed)'],
+            ['key_name' => 'registration_period', 'value' => 'Januari - Juli 2025', 'type' => 'text', 'group_name' => 'admission_info', 'description' => 'Periode Pendaftaran'],
+            ['key_name' => 'admission_deadline', 'value' => '2025-07-31', 'type' => 'date', 'group_name' => 'admission_info', 'description' => 'Deadline Pendaftaran'],
+            ['key_name' => 'registration_fee', 'value' => 'Rp 500.000', 'type' => 'text', 'group_name' => 'admission_info', 'description' => 'Biaya Pendaftaran'],
+            ['key_name' => 'annual_fee', 'value' => 'Rp 12.000.000', 'type' => 'text', 'group_name' => 'admission_info', 'description' => 'Biaya Tahunan'],
+            ['key_name' => 'min_age', 'value' => '5', 'type' => 'number', 'group_name' => 'admission_info', 'description' => 'Minimal Usia Pendaftaran'],
+            ['key_name' => 'max_age', 'value' => '18', 'type' => 'number', 'group_name' => 'admission_info', 'description' => 'Maksimal Usia Pendaftaran'],
+            ['key_name' => 'admission_procedure', 'value' => "1. Isi formulir online\n2. Upload dokumen persyaratan\n3. Bayar biaya pendaftaran\n4. Tes masuk\n5. Pengumuman", 'type' => 'textarea', 'group_name' => 'admission_info', 'description' => 'Prosedur Pendaftaran'],
+            ['key_name' => 'additional_documents', 'value' => "- Fotocopy Akta Kelahiran\n- Fotocopy Kartu Keluarga\n- Pas Foto 3x4 (3 lembar)\n- Rapor terakhir", 'type' => 'textarea', 'group_name' => 'admission_info', 'description' => 'Dokumen yang Diperlukan'],
+
+            // ===== EMAIL CONFIG =====
+            ['key_name' => 'smtp_host', 'value' => 'smtp.gmail.com', 'type' => 'text', 'group_name' => 'email_config', 'description' => 'SMTP Host'],
+            ['key_name' => 'smtp_port', 'value' => '587', 'type' => 'number', 'group_name' => 'email_config', 'description' => 'SMTP Port'],
+            ['key_name' => 'smtp_username', 'value' => '', 'type' => 'text', 'group_name' => 'email_config', 'description' => 'SMTP Username'],
+            ['key_name' => 'smtp_password', 'value' => '', 'type' => 'text', 'group_name' => 'email_config', 'description' => 'SMTP Password'],
+            ['key_name' => 'smtp_encryption', 'value' => 'tls', 'type' => 'text', 'group_name' => 'email_config', 'description' => 'SMTP Encryption (tls/ssl)'],
+            ['key_name' => 'email_from', 'value' => 'noreply@adyatama.sch.id', 'type' => 'email', 'group_name' => 'email_config', 'description' => 'Email Pengirim'],
+            ['key_name' => 'email_from_name', 'value' => 'Adyatama School', 'type' => 'text', 'group_name' => 'email_config', 'description' => 'Nama Pengirim'],
+            ['key_name' => 'email_notifications', 'value' => '1', 'type' => 'boolean', 'group_name' => 'email_config', 'description' => 'Aktifkan Notifikasi Email'],
+            ['key_name' => 'application_notification', 'value' => '1', 'type' => 'boolean', 'group_name' => 'email_config', 'description' => 'Notifikasi Pendaftaran Baru'],
+            ['key_name' => 'comment_notification', 'value' => '1', 'type' => 'boolean', 'group_name' => 'email_config', 'description' => 'Notifikasi Komentar Baru'],
+
+            // ===== SECURITY =====
+            ['key_name' => 'recaptcha_enabled', 'value' => '0', 'type' => 'boolean', 'group_name' => 'security', 'description' => 'Aktifkan reCAPTCHA'],
+            ['key_name' => 'recaptcha_site_key', 'value' => '', 'type' => 'text', 'group_name' => 'security', 'description' => 'reCAPTCHA Site Key'],
+            ['key_name' => 'recaptcha_secret_key', 'value' => '', 'type' => 'text', 'group_name' => 'security', 'description' => 'reCAPTCHA Secret Key'],
+            ['key_name' => 'max_login_attempts', 'value' => '5', 'type' => 'number', 'group_name' => 'security', 'description' => 'Maksimal Percobaan Login'],
+            ['key_name' => 'login_lockout_time', 'value' => '900', 'type' => 'number', 'group_name' => 'security', 'description' => 'Durasi Lockout (detik)'],
+            ['key_name' => 'gdpr_compliance', 'value' => '1', 'type' => 'boolean', 'group_name' => 'security', 'description' => 'Aktifkan GDPR Compliance'],
+            ['key_name' => 'cookie_consent', 'value' => '1', 'type' => 'boolean', 'group_name' => 'security', 'description' => 'Tampilkan Cookie Consent'],
+            ['key_name' => 'data_retention_days', 'value' => '365', 'type' => 'number', 'group_name' => 'security', 'description' => 'Lama Retensi Data (hari)'],
+
+            // ===== ACADEMIC CALENDAR =====
+            ['key_name' => 'academic_year', 'value' => '2024/2025', 'type' => 'text', 'group_name' => 'academic_calendar', 'description' => 'Tahun Ajaran'],
+            ['key_name' => 'semester', 'value' => 'Ganjil', 'type' => 'text', 'group_name' => 'academic_calendar', 'description' => 'Semester Aktif'],
+            ['key_name' => 'academic_calendar_url', 'value' => '', 'type' => 'file', 'group_name' => 'academic_calendar', 'description' => 'File Kalender Akademik (PDF)'],
+            ['key_name' => 'holidays_schedule', 'value' => "17-08-2025 Hari Kemerdekaan\n25-12-2025 Natal", 'type' => 'textarea', 'group_name' => 'academic_calendar', 'description' => 'Jadwal Libur'],
+            ['key_name' => 'exam_schedule', 'value' => '', 'type' => 'textarea', 'group_name' => 'academic_calendar', 'description' => 'Jadwal Ujian'],
+            ['key_name' => 'event_announcement', 'value' => '', 'type' => 'textarea', 'group_name' => 'academic_calendar', 'description' => 'Pengumuman Event'],
+            ['key_name' => 'upcoming_events', 'value' => '', 'type' => 'textarea', 'group_name' => 'academic_calendar', 'description' => 'Event Mendatang'],
+
+            // ===== WEBSITE BEHAVIOR =====
+            ['key_name' => 'maintenance_mode', 'value' => '0', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Mode Maintenance'],
+            ['key_name' => 'maintenance_message', 'value' => 'Website sedang dalam perbaikan. Mohon kembali lagi nanti.', 'type' => 'textarea', 'group_name' => 'website_behavior', 'description' => 'Pesan Maintenance'],
+            ['key_name' => 'posts_per_page', 'value' => '12', 'type' => 'number', 'group_name' => 'website_behavior', 'description' => 'Jumlah Post per Halaman'],
+            ['key_name' => 'galleries_per_page', 'value' => '12', 'type' => 'number', 'group_name' => 'website_behavior', 'description' => 'Jumlah Galeri per Halaman'],
+            ['key_name' => 'search_results_per_page', 'value' => '10', 'type' => 'number', 'group_name' => 'website_behavior', 'description' => 'Hasil Pencarian per Halaman'],
+            ['key_name' => 'enable_search', 'value' => '1', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Aktifkan Fitur Pencarian'],
+            ['key_name' => 'enable_sharing', 'value' => '1', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Aktifkan Tombol Share'],
+            ['key_name' => 'enable_reactions', 'value' => '1', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Aktifkan Reaksi Emoji'],
+            ['key_name' => 'guest_comment', 'value' => '0', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Izinkan Komentar Tamu'],
+            ['key_name' => 'auto_approve_comments', 'value' => '0', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Auto Approve Komentar'],
+            ['key_name' => 'comment_captcha', 'value' => '1', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Captcha untuk Komentar'],
+            ['key_name' => 'cdn_enabled', 'value' => '0', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Gunakan CDN'],
+            ['key_name' => 'minify_html', 'value' => '0', 'type' => 'boolean', 'group_name' => 'website_behavior', 'description' => 'Minify HTML Output'],
+
+            // ===== PAYMENT CONFIG =====
+            ['key_name' => 'payment_enabled', 'value' => '1', 'type' => 'boolean', 'group_name' => 'payment_config', 'description' => 'Aktifkan Payment Gateway'],
+            ['key_name' => 'payment_method', 'value' => 'manual_transfer', 'type' => 'text', 'group_name' => 'payment_config', 'description' => 'Metode Pembayaran Default'],
+            ['key_name' => 'bank_name', 'value' => 'Bank Mandiri', 'type' => 'text', 'group_name' => 'payment_config', 'description' => 'Nama Bank'],
+            ['key_name' => 'bank_account_name', 'value' => 'Yayasan Adyatama', 'type' => 'text', 'group_name' => 'payment_config', 'description' => 'Nama Pemilik Rekening'],
+            ['key_name' => 'bank_account_number', 'value' => '1234567890', 'type' => 'text', 'group_name' => 'payment_config', 'description' => 'Nomor Rekening'],
+            ['key_name' => 'midtrans_server_key', 'value' => '', 'type' => 'text', 'group_name' => 'payment_config', 'description' => 'Midtrans Server Key'],
+            ['key_name' => 'midtrans_client_key', 'value' => '', 'type' => 'text', 'group_name' => 'payment_config', 'description' => 'Midtrans Client Key'],
+            ['key_name' => 'midtrans_is_production', 'value' => '0', 'type' => 'boolean', 'group_name' => 'payment_config', 'description' => 'Midtrans Production Mode'],
+            ['key_name' => 'donation_enabled', 'value' => '1', 'type' => 'boolean', 'group_name' => 'payment_config', 'description' => 'Aktifkan Fitur Donasi'],
+            ['key_name' => 'donation_message', 'value' => 'Dukung pendidikan berkualitas di Adyatama School', 'type' => 'textarea', 'group_name' => 'payment_config', 'description' => 'Pesan Donasi'],
+
+            // ===== ACADEMIC INFO =====
+            ['key_name' => 'school_vision', 'value' => 'Menjadi lembaga pendidikan Islam terpadu yang unggul dalam prestasi dan berakhlak mulia', 'type' => 'textarea', 'group_name' => 'academic_info', 'description' => 'Visi Sekolah'],
+            ['key_name' => 'school_mission', 'value' => "1. Menyelenggarakan pendidikan berkualitas\n2. Membentuk karakter Islami\n3. Mengembangkan potensi siswa", 'type' => 'textarea', 'group_name' => 'academic_info', 'description' => 'Misi Sekolah'],
+            ['key_name' => 'curriculum', 'value' => 'Kurikulum Merdeka dengan pendekatan Islam Terpadu', 'type' => 'textarea', 'group_name' => 'academic_info', 'description' => 'Kurikulum'],
+            ['key_name' => 'accreditation', 'value' => 'A', 'type' => 'text', 'group_name' => 'academic_info', 'description' => 'Akreditasi'],
+            ['key_name' => 'total_students', 'value' => '500', 'type' => 'number', 'group_name' => 'academic_info', 'description' => 'Jumlah Siswa'],
+            ['key_name' => 'total_teachers', 'value' => '50', 'type' => 'number', 'group_name' => 'academic_info', 'description' => 'Jumlah Guru'],
+            ['key_name' => 'total_classes', 'value' => '24', 'type' => 'number', 'group_name' => 'academic_info', 'description' => 'Jumlah Kelas'],
+            ['key_name' => 'facilities', 'value' => "- Laboratorium Komputer\n- Perpustakaan\n- Masjid\n- Lapangan Olahraga\n- Kantin", 'type' => 'textarea', 'group_name' => 'academic_info', 'description' => 'Fasilitas Sekolah'],
+        ];
+
+        $inserted = 0;
+        foreach ($allDefaults as $setting) {
+            $existing = $this->settingModel->where('key_name', $setting['key_name'])->first();
+            if (!$existing) {
+                $this->settingModel->insert($setting);
+                $inserted++;
+            }
+        }
+
+        return redirect()->to('/dashboard/settings')->with('message', "Successfully added {$inserted} missing settings from new groups.");
     }
 }

@@ -122,7 +122,13 @@ $routes->group('dashboard', ['filter' => 'auth', 'namespace' => 'App\Controllers
     $routes->get('settings', 'Settings::index');
     $routes->post('settings/update', 'Settings::update');
     $routes->get('settings/seed-enhanced', 'Settings::seedDefaults');
+    $routes->get('settings/add-missing', 'Settings::addMissingGroups');
     $routes->get('settings/debug', 'Settings::debugUpload');
+    $routes->get('settings/debug-general', 'DebugGeneralSettings::index');
+    $routes->get('settings/remap-groups', 'RemapSettingsGroups::index');
+    $routes->get('settings/reset-and-seed', 'ResetAndSeedSettings::index');
+    $routes->get('settings/export', 'ExportSettings::index');
+    $routes->post('settings/import', 'ImportSettings::index');
     $routes->get('settings/delete-image/(:num)', 'Settings::deleteImage/$1');
     $routes->get('settings/fix', 'FixUploadController::index');
     $routes->post('settings/test-upload', 'FixUploadController::testUpload');
