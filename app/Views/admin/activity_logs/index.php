@@ -1,13 +1,6 @@
 <?= $this->extend('layout/admin_base') ?>
 
 <?= $this->section('content') ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Activity Log</h1>
-    <div>
-        <small class="text-muted">Total: <?= $pager->getTotal() ?> aktivitas</small>
-    </div>
-</div>
-
 <!-- Filters -->
 <div class="card shadow mb-4">
     <div class="card-header bg-light">
@@ -78,8 +71,10 @@
                     <?php if (!empty($logs)): ?>
                         <?php foreach ($logs as $index => $log): ?>
                             <?php
-                            // Helper function untuk badge color based on action
-                            $badgeConfig = getActivityBadge($log->action);
+                            // Helper function untuk badge color, icon, and label based on action
+                            $badgeColor = getActivityBadge($log->action);
+                            $badgeIcon = getActivityIcon($log->action);
+                            $badgeLabel = ucfirst(str_replace('_', ' ', $log->action));
                             ?>
                             <tr>
                                 <td class="text-muted"><?= ($index + 1) + ($pager->getCurrentPage() - 1) * 50 ?></td>
@@ -108,9 +103,9 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span class="badge <?= $badgeConfig['badge'] ?>" style="font-size: 11px;">
-                                        <i class="<?= $badgeConfig['icon'] ?> me-1"></i>
-                                        <?= $badgeConfig['label'] ?>
+                                    <span class="badge bg-<?= $badgeColor ?>" style="font-size: 11px;">
+                                        <i class="<?= $badgeIcon ?> me-1"></i>
+                                        <?= $badgeLabel ?>
                                     </span>
                                 </td>
                                 <td>
@@ -162,103 +157,5 @@
     </div>
 </div>
 
-<?php
-/**
- * Helper function to get badge configuration based on action
- */
-function getActivityBadge($action)
-{
-    $badges = [
-        // Auth
-        'login' => ['badge' => 'bg-success', 'icon' => 'fas fa-sign-in-alt', 'label' => 'Login'],
-        'logout' => ['badge' => 'bg-secondary', 'icon' => 'fas fa-sign-out-alt', 'label' => 'Logout'],
-        
-        // Post
-        'create_post' => ['badge' => 'bg-primary', 'icon' => 'fas fa-plus-circle', 'label' => 'Create Post'],
-        'update_post' => ['badge' => 'bg-info', 'icon' => 'fas fa-edit', 'label' => 'Update Post'],
-        'delete_post' => ['badge' => 'bg-danger', 'icon' => 'fas fa-trash', 'label' => 'Delete Post'],
-        'publish_post' => ['badge' => 'bg-success', 'icon' => 'fas fa-paper-plane', 'label' => 'Publish Post'],
-        'draft_post' => ['badge' => 'bg-warning', 'icon' => 'fas fa-file', 'label' => 'Draft Post'],
-        
-        // Page
-        'create_page' => ['badge' => 'bg-primary', 'icon' => 'fas fa-plus-circle', 'label' => 'Create Page'],
-        'update_page' => ['badge' => 'bg-info', 'icon' => 'fas fa-edit', 'label' => 'Update Page'],
-        'delete_page' => ['badge' => 'bg-danger', 'icon' => 'fas fa-trash', 'label' => 'Delete Page'],
-        
-        // Category
-        'create_category' => ['badge' => 'bg-primary', 'icon' => 'fas fa-plus-circle', 'label' => 'Create Category'],
-        'update_category' => ['badge' => 'bg-info', 'icon' => 'fas fa-edit', 'label' => 'Update Category'],
-        'delete_category' => ['badge' => 'bg-danger', 'icon' => 'fas fa-trash', 'label' => 'Delete Category'],
-        
-        // User
-        'create_user' => ['badge' => 'bg-primary', 'icon' => 'fas fa-user-plus', 'label' => 'Create User'],
-        'update_user' => ['badge' => 'bg-info', 'icon' => 'fas fa-user-edit', 'label' => 'Update User'],
-        'delete_user' => ['badge' => 'bg-danger', 'icon' => 'fas fa-user-times', 'label' => 'Delete User'],
-        
-        // Media
-        'upload_media' => ['badge' => 'bg-primary', 'icon' => 'fas fa-cloud-upload-alt', 'label' => 'Upload Media'],
-        'delete_media' => ['badge' => 'bg-danger', 'icon' => 'fas fa-trash', 'label' => 'Delete Media'],
-        'update_media' => ['badge' => 'bg-info', 'icon' => 'fas fa-edit', 'label' => 'Update Media'],
-        
-        // Gallery
-        'create_gallery' => ['badge' => 'bg-primary', 'icon' => 'fas fa-images', 'label' => 'Create Gallery'],
-        'update_gallery' => ['badge' => 'bg-info', 'icon' => 'fas fa-edit', 'label' => 'Update Gallery'],
-        'delete_gallery' => ['badge' => 'bg-danger', 'icon' => 'fas fa-trash', 'label' => 'Delete Gallery'],
-        
-        // Settings
-        'update_settings' => ['badge' => 'bg-warning text-dark', 'icon' => 'fas fa-cog', 'label' => 'Update Settings'],
-        
-        // Other
-        'student_application.created' => ['badge' => 'bg-info', 'icon' => 'fas fa-user-graduate', 'label' => 'New Application'],
-    ];
-
-    return $badges[$action] ?? ['badge' => 'bg-secondary', 'icon' => 'fas fa-circle', 'label' => ucfirst(str_replace('_', ' ', $action))];
-}
-
-/**
- * Helper function to get human-readable description
- */
-function getActivityDescription($log)
-{
-    $descriptions = [
-        'login' => 'Masuk ke sistem',
-        'logout' => 'Keluar dari sistem',
-        'create_post' => 'Membuat post baru',
-        'update_post' => 'Mengupdate post',
-        'delete_post' => 'Menghapus post',
-        'publish_post' => 'Mempublish post',
-        'draft_post' => 'Mengubah post ke draft',
-        'create_page' => 'Membuat halaman baru',
-        'update_page' => 'Mengupdate halaman',
-        'delete_page' => 'Menghapus halaman',
-        'create_category' => 'Membuat kategori baru',
-        'update_category' => 'Mengupdate kategori',
-        'delete_category' => 'Menghapus kategori',
-        'create_user' => 'Membuat user baru',
-        'update_user' => 'Mengupdate data user',
-        'delete_user' => 'Menghapus user',
-        'upload_media' => 'Upload media baru',
-        'delete_media' => 'Menghapus media',
-        'update_media' => 'Mengupdate media',
-        'create_gallery' => 'Membuat galeri baru',
-        'update_gallery' => 'Mengupdate galeri',
-        'delete_gallery' => 'Menghapus galeri',
-        'update_settings' => 'Mengupdate pengaturan website',
-        'student_application.created' => 'Pendaftaran siswa baru',
-    ];
-
-    $description = $descriptions[$log->action] ?? ucfirst(str_replace('_', ' ', $log->action));
-    
-    // Add meta info if available
-    if ($log->meta) {
-        $meta = json_decode($log->meta, true);
-        if ($meta && isset($meta['nama_lengkap'])) {
-            $description .= ': <strong>' . esc($meta['nama_lengkap']) . '</strong>';
-        }
-    }
-    
-    return $description;
-}
-?>
 
 <?= $this->endSection() ?>

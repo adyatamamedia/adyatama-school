@@ -4,8 +4,7 @@
 
 <?php
 // Helper function untuk format size
-function formatBytes($bytes, $precision = 2)
-{
+function formatBytes($bytes, $precision = 2) {
     $units = ['B', 'KB', 'MB', 'GB', 'TB'];
     $bytes = max($bytes, 0);
     $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
@@ -40,7 +39,7 @@ function formatBytes($bytes, $precision = 2)
 </div>
 
 <!-- Main Statistics Cards -->
-<div class="container-fluid mb-4 px-0">
+<div class="container-fluid mb-4">
     <div class="row g-3">
         <!-- Total Posts Card -->
         <div class="col-xl-3 col-lg-6 col-md-6">
@@ -64,9 +63,9 @@ function formatBytes($bytes, $precision = 2)
                                 <small class="text-muted">dari 30 hari lalu</small>
                             </div>
                             <?php if (isset($stats['posts']['draft']) && $stats['posts']['draft'] > 0): ?>
-                                <small class="text-muted">
-                                    <i class="fas fa-edit me-1"></i><?= $stats['posts']['draft'] ?> draft
-                                </small>
+                            <small class="text-muted">
+                                <i class="fas fa-edit me-1"></i><?= $stats['posts']['draft'] ?> draft
+                            </small>
                             <?php endif; ?>
                         </div>
                         <div class="stat-icon-v2">
@@ -126,10 +125,10 @@ function formatBytes($bytes, $precision = 2)
                             $userGrowth = $stats['users']['growth'] ?? 0;
                             if ($userGrowth != 0):
                             ?>
-                                <small class="text-muted">
-                                    <i class="fas <?= $userGrowth >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' ?> me-1"></i>
-                                    <?= abs($userGrowth) ?>% pertumbuhan
-                                </small>
+                            <small class="text-muted">
+                                <i class="fas <?= $userGrowth >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' ?> me-1"></i>
+                                <?= abs($userGrowth) ?>% pertumbuhan
+                            </small>
                             <?php endif; ?>
                         </div>
                         <div class="stat-icon-v2">
@@ -176,7 +175,7 @@ function formatBytes($bytes, $precision = 2)
 </div>
 
 <!-- Quick Stats Row -->
-<div class="container-fluid mb-4 px-0">
+<div class="container-fluid mb-4">
     <div class="row g-3">
         <!-- Pages Card -->
         <div class="col-xl-3 col-lg-6 col-md-6">
@@ -187,7 +186,7 @@ function formatBytes($bytes, $precision = 2)
                             <i class="fas fa-file-alt"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <h3 class="mb-0 counter-simple text-dark" data-target="<?= $stats['pages']['total'] ?? 0 ?>">0</h3>
+                            <h3 class="mb-0 counter-animate" data-target="<?= $stats['pages']['total'] ?? 0 ?>">0</h3>
                             <small class="text-muted">Halaman</small>
                         </div>
                     </div>
@@ -204,7 +203,7 @@ function formatBytes($bytes, $precision = 2)
                             <i class="fas fa-comments"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <h3 class="mb-0 counter-simple text-dark" data-target="<?= $stats['comments']['pending'] ?? 0 ?>">0</h3>
+                            <h3 class="mb-0 counter-animate" data-target="<?= $stats['comments']['pending'] ?? 0 ?>">0</h3>
                             <small class="text-muted">Pending Comments</small>
                         </div>
                     </div>
@@ -221,7 +220,7 @@ function formatBytes($bytes, $precision = 2)
                             <i class="fas fa-user-graduate"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <h3 class="mb-0 counter-simple text-dark" data-target="<?= $stats['student_applications']['pending'] ?? 0 ?>">0</h3>
+                            <h3 class="mb-0 counter-animate" data-target="<?= $stats['student_applications']['pending'] ?? 0 ?>">0</h3>
                             <small class="text-muted">Pendaftaran Pending</small>
                         </div>
                     </div>
@@ -238,7 +237,7 @@ function formatBytes($bytes, $precision = 2)
                             <i class="fas fa-folder-open"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <h3 class="mb-0 counter-simple text-dark" data-target="<?= $stats['media']['total'] ?? 0 ?>">0</h3>
+                            <h3 class="mb-0 counter-animate" data-target="<?= $stats['media']['total'] ?? 0 ?>">0</h3>
                             <small class="text-muted">Media (<?= formatBytes($stats['media']['total_size'] ?? 0) ?>)</small>
                         </div>
                     </div>
@@ -249,7 +248,7 @@ function formatBytes($bytes, $precision = 2)
 </div>
 
 <!-- Charts Row -->
-<div class="container-fluid mb-4 px-0">
+<div class="container-fluid mb-4">
     <div class="row g-3">
         <!-- Visitor Statistics Chart -->
         <div class="col-xl-8">
@@ -299,7 +298,7 @@ function formatBytes($bytes, $precision = 2)
 </div>
 
 <!-- Popular Posts & Activity Breakdown -->
-<div class="container-fluid mb-4 px-0">
+<div class="container-fluid mb-4">
     <div class="row g-3">
         <!-- Popular Posts -->
         <div class="col-xl-6">
@@ -323,21 +322,21 @@ function formatBytes($bytes, $precision = 2)
                             <tbody>
                                 <?php if (!empty($stats['popular_posts'])): ?>
                                     <?php foreach ($stats['popular_posts'] as $index => $post): ?>
-                                        <tr>
-                                            <td class="text-muted"><?= $index + 1 ?></td>
-                                            <td>
-                                                <a href="<?= base_url('admin/posts/edit/' . $post['id']) ?>" class="text-decoration-none">
-                                                    <?= esc($post['title']) ?>
-                                                </a>
-                                                <br>
-                                                <small class="text-muted"><?= date('d M Y', strtotime($post['created_at'])) ?></small>
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="badge bg-primary-subtle text-primary">
-                                                    <i class="fas fa-eye me-1"></i><?= number_format($post['view_count']) ?>
-                                                </span>
-                                            </td>
-                                        </tr>
+                                    <tr>
+                                        <td class="text-muted"><?= $index + 1 ?></td>
+                                        <td>
+                                            <a href="<?= base_url('admin/posts/edit/' . $post['id']) ?>" class="text-decoration-none">
+                                                <?= esc($post['title']) ?>
+                                            </a>
+                                            <br>
+                                            <small class="text-muted"><?= date('d M Y', strtotime($post['created_at'])) ?></small>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary-subtle text-primary">
+                                                <i class="fas fa-eye me-1"></i><?= number_format($post['view_count']) ?>
+                                            </span>
+                                        </td>
+                                    </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
@@ -374,7 +373,7 @@ function formatBytes($bytes, $precision = 2)
 </div>
 
 <!-- Recent Activities & System Status -->
-<div class="container-fluid mb-4 px-0">
+<div class="container-fluid mb-4">
     <div class="row g-3">
         <!-- Recent Activities -->
         <div class="col-xl-8">
@@ -385,7 +384,7 @@ function formatBytes($bytes, $precision = 2)
                             <i class="fas fa-history me-2 text-primary"></i>
                             Aktivitas Terbaru
                         </h6>
-                        <a href="<?= base_url('dashboard/activity-logs') ?>" class="btn btn-sm btn-outline-primary">
+                        <a href="<?= base_url('admin/activity-logs') ?>" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-list me-1"></i>Lihat Semua
                         </a>
                     </div>
@@ -395,88 +394,60 @@ function formatBytes($bytes, $precision = 2)
                         <table class="table table-hover table-sm mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th style="width: 50px;">#</th>
                                     <th style="width: 150px;">User</th>
-                                    <th style="width: 200px;">Activity</th>
+                                    <th style="width: 150px;">Action</th>
                                     <th>Details</th>
-                                    <th style="width: 120px;">IP Address</th>
                                     <th style="width: 150px;">Time</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (!empty($recent_activities)): ?>
-                                    <?php foreach ($recent_activities as $index => $activity): ?>
+                                    <?php foreach ($recent_activities as $activity): ?>
                                         <?php
-                                        // Helper function untuk badge color, icon, and label based on action
-                                        $badgeColor = getActivityBadge($activity->action);
-                                        $badgeIcon = getActivityIcon($activity->action);
-                                        $badgeLabel = ucfirst(str_replace('_', ' ', $activity->action));
+                                        // Determine badge color
+                                        $badgeColor = 'secondary';
+                                        if (strpos($activity->action, 'create') !== false) $badgeColor = 'success';
+                                        elseif (strpos($activity->action, 'update') !== false) $badgeColor = 'warning';
+                                        elseif (strpos($activity->action, 'delete') !== false) $badgeColor = 'danger';
+                                        elseif (strpos($activity->action, 'login') !== false) $badgeColor = 'info';
                                         ?>
                                         <tr>
-                                            <td class="text-muted"><?= $index + 1 ?></td>
                                             <td>
-                                                <?php if ($activity->username): ?>
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="avatar-circle bg-primary text-white me-2" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px;">
-                                                            <?= strtoupper(substr($activity->username, 0, 2)) ?>
-                                                        </div>
-                                                        <div>
-                                                            <div class="fw-bold small"><?= esc($activity->username) ?></div>
-                                                            <?php if ($activity->user_fullname): ?>
-                                                                <div class="text-muted" style="font-size: 11px;"><?= esc($activity->user_fullname) ?></div>
-                                                            <?php endif; ?>
-                                                        </div>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm bg-primary bg-gradient text-white me-2">
+                                                        <?= strtoupper(substr($activity->username ?? 'S', 0, 1)) ?>
                                                     </div>
-                                                <?php else: ?>
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="avatar-circle bg-secondary text-white me-2" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px;">
-                                                            <i class="fas fa-robot"></i>
-                                                        </div>
-                                                        <div>
-                                                            <div class="text-muted small">System/Guest</div>
-                                                        </div>
+                                                    <div>
+                                                        <div class="fw-bold small"><?= esc($activity->username ?? 'System') ?></div>
                                                     </div>
-                                                <?php endif; ?>
+                                                </div>
                                             </td>
                                             <td>
-                                                <span class="badge bg-<?= $badgeColor ?>" style="font-size: 11px;">
-                                                    <i class="<?= $badgeIcon ?> me-1"></i>
-                                                    <?= $badgeLabel ?>
+                                                <span class="badge bg-<?= $badgeColor ?>-subtle text-<?= $badgeColor ?> small">
+                                                    <?= ucwords(str_replace('_', ' ', $activity->action)) ?>
                                                 </span>
                                             </td>
                                             <td>
-                                                <div class="small">
-                                                    <?= getActivityDescription($activity) ?>
-                                                </div>
-                                                <?php if ($activity->subject_type && $activity->subject_id): ?>
-                                                    <div class="mt-1">
-                                                        <span class="badge bg-light text-dark border" style="font-size: 10px;">
-                                                            <?= esc($activity->subject_type) ?> #<?= esc($activity->subject_id) ?>
-                                                        </span>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <small class="text-muted">
-                                                    <i class="fas fa-network-wired me-1"></i><?= esc($activity->ip_address) ?>
+                                                <small>
+                                                    <?php if ($activity->subject_type && $activity->subject_id): ?>
+                                                        <?= esc($activity->subject_type) ?> #<?= esc($activity->subject_id) ?>
+                                                    <?php else: ?>
+                                                        <?= esc($activity->action) ?>
+                                                    <?php endif; ?>
                                                 </small>
                                             </td>
                                             <td>
-                                                <div class="small text-muted">
-                                                    <i class="far fa-clock me-1"></i>
-                                                    <?= date('d M Y', strtotime($activity->created_at)) ?>
-                                                </div>
-                                                <div style="font-size: 11px;" class="text-muted">
-                                                    <?= date('H:i:s', strtotime($activity->created_at)) ?>
-                                                </div>
+                                                <small class="text-muted">
+                                                    <?= date('d M, H:i', strtotime($activity->created_at)) ?>
+                                                </small>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="6" class="text-center text-muted py-4">
-                                            <i class="fas fa-inbox fa-3x mb-3 d-block opacity-25"></i>
-                                            Belum ada aktivitas terbaru
+                                        <td colspan="4" class="text-center text-muted py-4">
+                                            <i class="fas fa-inbox fa-2x mb-2 d-block opacity-25"></i>
+                                            Belum ada aktivitas
                                         </td>
                                     </tr>
                                 <?php endif; ?>
@@ -510,25 +481,25 @@ function formatBytes($bytes, $precision = 2)
                     <div class="row g-2 mb-3">
                         <div class="col-6">
                             <div class="border rounded p-2 text-center">
-                                <div class="fw-bold text-success counter-simple" data-target="<?= $stats['posts']['total'] ?? 0 ?>">0</div>
+                                <div class="fw-bold text-success counter-animate" data-target="<?= $stats['posts']['total'] ?? 0 ?>">0</div>
                                 <small class="text-muted d-block">Posts</small>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-2 text-center">
-                                <div class="fw-bold text-info counter-simple" data-target="<?= $stats['pages']['total'] ?? 0 ?>">0</div>
+                                <div class="fw-bold text-info counter-animate" data-target="<?= $stats['pages']['total'] ?? 0 ?>">0</div>
                                 <small class="text-muted d-block">Pages</small>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-2 text-center">
-                                <div class="fw-bold text-warning counter-simple" data-target="<?= $stats['galleries']['total'] ?? 0 ?>">0</div>
+                                <div class="fw-bold text-warning counter-animate" data-target="<?= $stats['galleries']['total'] ?? 0 ?>">0</div>
                                 <small class="text-muted d-block">Galleries</small>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-2 text-center">
-                                <div class="fw-bold text-primary counter-simple" data-target="<?= $stats['media']['total'] ?? 0 ?>">0</div>
+                                <div class="fw-bold text-primary counter-animate" data-target="<?= $stats['media']['total'] ?? 0 ?>">0</div>
                                 <small class="text-muted d-block">Media</small>
                             </div>
                         </div>
@@ -537,14 +508,14 @@ function formatBytes($bytes, $precision = 2)
                     <!-- Performance Bars -->
                     <div class="mb-3">
                         <h6 class="text-muted mb-3 small">Performance</h6>
-
+                        
                         <div class="mb-3">
                             <div class="d-flex justify-content-between mb-1">
                                 <small class="text-muted">Storage Usage</small>
                                 <small class="text-muted"><?= formatBytes($stats['media']['total_size'] ?? 0) ?></small>
                             </div>
                             <div class="progress" style="height: 6px;">
-                                <?php
+                                <?php 
                                 $totalSize = $stats['media']['total_size'] ?? 0;
                                 $maxSize = 1073741824; // 1GB
                                 $percentage = min(($totalSize / $maxSize) * 100, 100);
@@ -581,171 +552,171 @@ function formatBytes($bytes, $precision = 2)
 
 <!-- Charts JavaScript -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Chart.js Configuration
-        Chart.defaults.font.family = "'Source Sans Pro', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
-        Chart.defaults.color = '#6c757d';
+document.addEventListener('DOMContentLoaded', function() {
+    // Chart.js Configuration
+    Chart.defaults.font.family = "'Source Sans Pro', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
+    Chart.defaults.color = '#6c757d';
 
-        // Visitor Statistics Chart
-        const visitorCtx = document.getElementById('visitorChart');
-        if (visitorCtx) {
-            new Chart(visitorCtx, {
-                type: 'line',
-                data: {
-                    labels: <?= json_encode($stats['visitor_chart']['labels'] ?? []) ?>,
-                    datasets: [{
-                        label: 'Pengunjung',
-                        data: <?= json_encode($stats['visitor_chart']['data'] ?? []) ?>,
-                        borderColor: 'rgb(54, 162, 235)',
-                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        pointBackgroundColor: 'rgb(54, 162, 235)',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    }]
+    // Visitor Statistics Chart
+    const visitorCtx = document.getElementById('visitorChart');
+    if (visitorCtx) {
+        new Chart(visitorCtx, {
+            type: 'line',
+            data: {
+                labels: <?= json_encode($stats['visitor_chart']['labels'] ?? []) ?>,
+                datasets: [{
+                    label: 'Pengunjung',
+                    data: <?= json_encode($stats['visitor_chart']['data'] ?? []) ?>,
+                    borderColor: 'rgb(54, 162, 235)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: 'rgb(54, 162, 235)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        padding: 12,
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        displayColors: false
+                    }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0,0,0,0.8)',
-                            padding: 12,
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            displayColors: false
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
                         }
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0,0,0,0.05)'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Content Distribution Chart
-        const contentCtx = document.getElementById('contentChart');
-        if (contentCtx) {
-            const contentDist = <?= json_encode($stats['content_distribution'] ?? []) ?>;
-            new Chart(contentCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Posts', 'Pages', 'Galleries', 'Media'],
-                    datasets: [{
-                        data: [
-                            contentDist.posts || 0,
-                            contentDist.pages || 0,
-                            contentDist.galleries || 0,
-                            contentDist.media || 0
-                        ],
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.8)',
-                            'rgba(54, 162, 235, 0.8)',
-                            'rgba(255, 206, 86, 0.8)',
-                            'rgba(75, 192, 192, 0.8)'
-                        ],
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 15,
-                                usePointStyle: true,
-                                font: {
-                                    size: 11
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Activity Breakdown Chart
-        const activityCtx = document.getElementById('activityChart');
-        if (activityCtx) {
-            const activityData = <?= json_encode($stats['activity_breakdown'] ?? []) ?>;
-            const labels = activityData.map(item => item.action.replace('_', ' '));
-            const data = activityData.map(item => item.count);
-
-            new Chart(activityCtx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Actions',
-                        data: data,
-                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
+                    x: {
+                        grid: {
                             display: false
                         }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
-                        }
                     }
                 }
-            });
-        }
-
-        // Animated Counter Function
-        function animateCounter(element, target, duration = 2000) {
-            const start = 0;
-            const increment = target / (duration / 16);
-            let current = start;
-
-            const timer = setInterval(() => {
-                current += increment;
-                if (current >= target) {
-                    current = target;
-                    clearInterval(timer);
-                }
-                element.textContent = Math.floor(current).toLocaleString();
-            }, 16);
-        }
-
-        // Initialize counters (both animate and simple)
-        document.querySelectorAll('.counter-animate, .counter-simple').forEach(counter => {
-            const target = parseInt(counter.getAttribute('data-target'));
-            if (!isNaN(target)) {
-                animateCounter(counter, target);
             }
         });
+    }
+
+    // Content Distribution Chart
+    const contentCtx = document.getElementById('contentChart');
+    if (contentCtx) {
+        const contentDist = <?= json_encode($stats['content_distribution'] ?? []) ?>;
+        new Chart(contentCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Posts', 'Pages', 'Galleries', 'Media'],
+                datasets: [{
+                    data: [
+                        contentDist.posts || 0,
+                        contentDist.pages || 0,
+                        contentDist.galleries || 0,
+                        contentDist.media || 0
+                    ],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Activity Breakdown Chart
+    const activityCtx = document.getElementById('activityChart');
+    if (activityCtx) {
+        const activityData = <?= json_encode($stats['activity_breakdown'] ?? []) ?>;
+        const labels = activityData.map(item => item.action.replace('_', ' '));
+        const data = activityData.map(item => item.count);
+        
+        new Chart(activityCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Actions',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Animated Counter Function
+    function animateCounter(element, target, duration = 2000) {
+        const start = 0;
+        const increment = target / (duration / 16);
+        let current = start;
+
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            element.textContent = Math.floor(current).toLocaleString();
+        }, 16);
+    }
+
+    // Initialize counters
+    document.querySelectorAll('.counter-animate').forEach(counter => {
+        const target = parseInt(counter.getAttribute('data-target'));
+        if (!isNaN(target)) {
+            animateCounter(counter, target);
+        }
     });
+});
 </script>
 
 <?= $this->endSection() ?>

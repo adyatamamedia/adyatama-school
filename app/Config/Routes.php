@@ -15,8 +15,9 @@ $routes->post('login', 'Auth::attemptLogin');
 $routes->get('logout', 'Auth::logout');
 
 // Dashboard Routes (Protected)
-$routes->group('dashboard', ['filter' => 'auth', 'namespace' => 'App\Controllers\Admin'], function($routes) {
-    $routes->get('/', 'Dashboard::index');
+$routes->group('dashboard', ['filter' => 'auth', 'namespace' => 'App\Controllers\Admin'], function ($routes) {
+    $routes->get('/', 'DashboardNew::index');
+    $routes->get("dev", "DashboardNew::indexDev"); // Development dengan mock data
 
     // Categories Routes
     $routes->get('categories', 'Categories::index');
@@ -159,6 +160,3 @@ $routes->get('check-settings', 'CheckSettings::index');
 $routes->get('add-missing-settings', 'AddMissingSettings::index');
 $routes->get('debug-images', 'DebugImageSettings::index');
 $routes->get('debug-images/fix-hero', 'DebugImageSettings::fixHero');
-
-
-
