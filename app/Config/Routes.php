@@ -17,9 +17,13 @@ $routes->get('logout', 'Auth::logout');
 // Dashboard Routes (Protected)
 $routes->group('dashboard', ['filter' => 'auth', 'namespace' => 'App\Controllers\Admin'], function ($routes) {
     $routes->get('/', 'DashboardNew::index');
-    $routes->get("dev", "DashboardNew::indexDev"); // Development dengan mock data
-
-    // Categories Routes
+    // Debug Routes (Disabled in Production)
+    if (CI_DEBUG) {
+        $routes->get("dev", "DashboardNew::indexDev");
+        $routes->get('settings/debug-general', 'DebugGeneralSettings::index');
+        // $routes->get('debug-settings', 'DebugSettings::index'); // Assuming this controller exists
+        // $routes->post('debug-settings/update', 'DebugSettings::update');
+    }
     $routes->get('categories', 'Categories::index');
     $routes->get('categories/new', 'Categories::new');
     $routes->post('categories/create', 'Categories::create');
