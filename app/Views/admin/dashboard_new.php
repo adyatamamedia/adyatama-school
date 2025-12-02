@@ -417,9 +417,13 @@ function formatBytes($bytes, $precision = 2)
                                             <td>
                                                 <?php if ($activity->username): ?>
                                                     <div class="d-flex align-items-center">
-                                                        <div class="avatar-circle bg-primary text-white me-2" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px;">
-                                                            <?= strtoupper(substr($activity->username, 0, 2)) ?>
-                                                        </div>
+                                                        <?php if (!empty($activity->photo) && file_exists(FCPATH . $activity->photo)): ?>
+                                                            <img src="<?= base_url($activity->photo) ?>" alt="" class="me-2 rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+                                                        <?php else: ?>
+                                                            <div class="avatar-circle bg-primary text-white me-2" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                                                                <?= strtoupper(substr($activity->username, 0, 2)) ?>
+                                                            </div>
+                                                        <?php endif; ?>
                                                         <div>
                                                             <div class="fw-bold small"><?= esc($activity->username) ?></div>
                                                             <?php if ($activity->user_fullname): ?>

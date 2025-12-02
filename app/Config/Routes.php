@@ -14,8 +14,8 @@ $routes->get('login', 'Auth::login');
 $routes->post('login', 'Auth::attemptLogin');
 $routes->get('logout', 'Auth::logout');
 
-// Dashboard Routes (Protected)
-$routes->group('dashboard', ['filter' => 'auth', 'namespace' => 'App\Controllers\Admin'], function ($routes) {
+// Dashboard Routes (Protected with Role-Based Access)
+$routes->group('dashboard', ['filter' => ['auth', 'role'], 'namespace' => 'App\Controllers\Admin'], function ($routes) {
     $routes->get('/', 'DashboardNew::index');
     // Debug Routes (Disabled in Production)
     if (CI_DEBUG) {
@@ -52,6 +52,7 @@ $routes->group('dashboard', ['filter' => 'auth', 'namespace' => 'App\Controllers
     $routes->post('media/upload-multiple', 'Media::uploadMultiple');
     $routes->post('media/bulk-delete', 'Media::bulkDelete');
     $routes->post('media/update/(:num)', 'Media::update/$1');
+    $routes->post('media/edit-image/(:num)', 'Media::editImage/$1');
     $routes->get('media/delete/(:num)', 'Media::delete/$1');
     $routes->get('api/media', 'Media::getMediaJson');
 
@@ -111,6 +112,7 @@ $routes->group('dashboard', ['filter' => 'auth', 'namespace' => 'App\Controllers
     $routes->post('pendaftaran/update-status/(:num)', 'StudentApplications::updateStatus/$1');
     $routes->get('pendaftaran/delete/(:num)', 'StudentApplications::delete/$1');
     $routes->post('pendaftaran/bulk-delete', 'StudentApplications::bulkDelete');
+    $routes->post('pendaftaran/bulk-approve', 'StudentApplications::bulkApprove');
     $routes->get('pendaftaran/export-excel', 'StudentApplications::exportExcel');
     $routes->get('pendaftaran/export-doc/(:num)', 'StudentApplications::exportDoc/$1');
 
@@ -119,14 +121,17 @@ $routes->group('dashboard', ['filter' => 'auth', 'namespace' => 'App\Controllers
     $routes->get('tags/delete/(:segment)', 'Tags::delete/$1');
     $routes->post('tags/bulk-delete', 'Tags::bulkDelete');
 
-    // User Management
-    $routes->get('users', 'Users::index');
-    $routes->get('users/new', 'Users::new');
-    $routes->post('users/create', 'Users::create');
-    $routes->get('users/edit/(:num)', 'Users::edit/$1');
-    $routes->post('users/update/(:num)', 'Users::update/$1');
-    $routes->get('users/delete/(:num)', 'Users::delete/$1');
-    $routes->post('users/bulk-delete', 'Users::bulkDelete');
+    // User Management (Admin Only)
+    $routes->group('users', ['filter' => 'admin'], function ($routes) {
+        $routes->get('/', 'Users::index');
+        $routes->get('new', 'Users::new');
+        $routes->post('create', 'Users::create');
+        $routes->get('edit/(:num)', 'Users::edit/$1');
+        $routes->post('update/(:num)', 'Users::update/$1');
+        $routes->post('delete-photo/(:num)', 'Users::deletePhoto/$1');
+        $routes->get('delete/(:num)', 'Users::delete/$1');
+        $routes->post('bulk-delete', 'Users::bulkDelete');
+    });
 
     // Settings Routes
     $routes->get('settings', 'Settings::index');
@@ -148,9 +153,11 @@ $routes->group('dashboard', ['filter' => 'auth', 'namespace' => 'App\Controllers
     $routes->post('settings-upload/update', 'SettingsUpload::update');
     $routes->get('settings-upload/delete-image/(:segment)', 'SettingsUpload::deleteImage/$1');
 
-    // Debug Routes
-    $routes->get('debug-settings', 'DebugSettings::index');
-    $routes->post('debug-settings/update', 'DebugSettings::update');
+    // Debug Routes (disabled in production)
+    if (CI_DEBUG) {
+        $routes->get('debug-settings', 'DebugSettings::index');
+        $routes->post('debug-settings/update', 'DebugSettings::update');
+    }
 
     // Activity Logs
     $routes->get('activity-logs', 'ActivityLogs::index');
@@ -162,10 +169,12 @@ $routes->group('dashboard', ['filter' => 'auth', 'namespace' => 'App\Controllers
     $routes->get('comments/delete/(:num)', 'Comments::delete/$1');
 });
 
-// Test routes
-$routes->get('test-upload', 'TestUpload::index');
-$routes->post('test-upload/process', 'TestUpload::process');
-$routes->get('check-settings', 'CheckSettings::index');
-$routes->get('add-missing-settings', 'AddMissingSettings::index');
-$routes->get('debug-images', 'DebugImageSettings::index');
-$routes->get('debug-images/fix-hero', 'DebugImageSettings::fixHero');
+// Test routes (disabled in production)
+if (CI_DEBUG) {
+    $routes->get('test-upload', 'TestUpload::index');
+    $routes->post('test-upload/process', 'TestUpload::process');
+    $routes->get('check-settings', 'CheckSettings::index');
+    $routes->get('add-missing-settings', 'AddMissingSettings::index');
+    $routes->get('debug-images', 'DebugImageSettings::index');
+    $routes->get('debug-images/fix-hero', 'DebugImageSettings::fixHero');
+}

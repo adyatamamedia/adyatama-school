@@ -91,6 +91,7 @@ class Pages extends BaseController
     {
         $rules = [
             'title' => 'required|min_length[3]|max_length[255]',
+            'slug' => 'required|is_unique[pages.slug]|max_length[255]',
             'status' => 'required|in_list[draft,published]',
         ];
 
@@ -99,10 +100,14 @@ class Pages extends BaseController
         }
 
         $title = $this->request->getPost('title');
-        $slug = url_title($title, '-', true);
+        $slug = $this->request->getPost('slug');
         
-        if ($this->pageModel->where('slug', $slug)->first()) {
-            $slug = $slug . '-' . time();
+        // Fallback: if slug is empty, generate from title
+        if (empty($slug)) {
+            $slug = url_title($title, '-', true);
+            if ($this->pageModel->where('slug', $slug)->first()) {
+                $slug = $slug . '-' . time();
+            }
         }
 
         // Load HTML sanitization helper
@@ -117,6 +122,9 @@ class Pages extends BaseController
         ]);
         
         $pageId = $this->pageModel->insertID();
+        
+        helper('auth');
+        log_activity('create_page', 'page', $pageId, ['title' => $title]);
 
         // Handle SEO Data
         $seoData = $this->request->getPost('seo');
@@ -160,6 +168,7 @@ class Pages extends BaseController
 
         $rules = [
             'title' => 'required|min_length[3]|max_length[255]',
+            'slug' => "required|is_unique[pages.slug,id,{$id}]|max_length[255]",
             'status' => 'required|in_list[draft,published]',
         ];
 
@@ -170,12 +179,20 @@ class Pages extends BaseController
         // Load HTML sanitization helper
         helper('html');
 
-        $this->pageModel->update($id, [
+        $slug = $this->request->getPost('slug');
+
+        $data = [
+            'id' => $id,
             'title' => $this->request->getPost('title'),
+            'slug' => $slug,
             'content' => sanitize_html($this->request->getPost('content')),
             'featured_image' => $this->request->getPost('featured_image'),
             'status' => $this->request->getPost('status'),
-        ]);
+        ];
+
+        if (!$this->pageModel->save($data)) {
+            return redirect()->back()->withInput()->with('errors', $this->pageModel->errors());
+        }
 
         // Handle SEO Data Update
         $seoData = $this->request->getPost('seo');
@@ -197,18 +214,29 @@ class Pages extends BaseController
             
             $this->seoModel->save($saveData);
         }
+        
+        helper('auth');
+        log_activity('update_page', 'page', $id, ['title' => $this->request->getPost('title')]);
 
         return redirect()->to('/dashboard/pages')->with('message', 'Page updated successfully.');
     }
 
     public function delete($id)
     {
+        helper('auth');
+        
+        $page = $this->pageModel->find($id);
         $this->pageModel->delete($id);
+        
+        log_activity('delete_page', 'page', $id, ['title' => $page->title ?? null]);
+        
         return redirect()->to('/dashboard/pages')->with('message', 'Page deleted successfully.');
     }
 
     public function bulkDelete()
     {
+        helper('auth');
+        
         $ids = $this->request->getPost('ids');
 
         if (!$ids || !is_array($ids)) {
@@ -218,6 +246,7 @@ class Pages extends BaseController
         $count = 0;
         foreach ($ids as $id) {
             if ($this->pageModel->delete($id)) {
+                log_activity('bulk_delete_page', 'page', $id);
                 $count++;
             }
         }
@@ -227,6 +256,8 @@ class Pages extends BaseController
 
     public function bulkDraft()
     {
+        helper('auth');
+        
         $ids = $this->request->getPost('ids');
 
         if (!$ids || !is_array($ids)) {
@@ -236,6 +267,7 @@ class Pages extends BaseController
         $count = 0;
         foreach ($ids as $id) {
             if ($this->pageModel->update($id, ['status' => 'draft'])) {
+                log_activity('bulk_draft_page', 'page', $id);
                 $count++;
             }
         }
@@ -245,6 +277,8 @@ class Pages extends BaseController
 
     public function bulkPublish()
     {
+        helper('auth');
+        
         $ids = $this->request->getPost('ids');
 
         if (!$ids || !is_array($ids)) {
@@ -254,6 +288,7 @@ class Pages extends BaseController
         $count = 0;
         foreach ($ids as $id) {
             if ($this->pageModel->update($id, ['status' => 'published', 'published_at' => date('Y-m-d H:i:s')])) {
+                log_activity('bulk_publish_page', 'page', $id);
                 $count++;
             }
         }

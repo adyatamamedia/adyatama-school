@@ -54,5 +54,20 @@ abstract class BaseController extends Controller
         // Preload any models, libraries, etc, here.
 
         // E.g.: $this->session = \Config\Services::session();
+
+        // Set Timezone from Database Settings
+        try {
+            $settingModel = new \App\Models\SettingModel();
+            $timezone = $settingModel->getValue('timezone');
+            
+            if ($timezone) {
+                date_default_timezone_set($timezone);
+                // Also update the app config instance if possible, though date_default_timezone_set is the most critical
+                config('App')->appTimezone = $timezone;
+            }
+        } catch (\Throwable $e) {
+            // Silently fail if database is not connected or table doesn't exist yet
+            // This prevents errors during migrations or initial setup
+        }
     }
 }

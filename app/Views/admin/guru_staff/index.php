@@ -43,7 +43,7 @@
                                 </td>
                                 <td class="text-center">
                                     <?php if($person->foto): ?>
-                                        <img src="<?= base_url($person->foto) ?>" alt="Foto" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
+                                        <img src="<?= base_url('uploads/' . $person->foto) ?>" alt="Foto" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
                                     <?php else: ?>
                                         <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto" style="width: 50px; height: 50px;">
                                             <i class="fas fa-user"></i>

@@ -34,6 +34,31 @@ function initializeSummernote() {
     try {
         console.log('Initializing Summernote...');
 
+        // Custom button to open media modal
+        var MediaButton = function (context) {
+            var ui = $.summernote.ui;
+
+            // Create button
+            var button = ui.button({
+                contents: '<i class="fas fa-images"></i>',
+                tooltip: 'Insert from Media Library',
+                click: function () {
+                    console.log('Media Library button clicked');
+                    
+                    // Store current editor element (not context)
+                    window.currentSummernoteElement = $(context.layoutInfo.editable).closest('.note-editor').prev('.summernote');
+                    
+                    console.log('Stored editor element:', window.currentSummernoteElement);
+                    
+                    // Open media modal
+                    var mediaModal = new bootstrap.Modal(document.getElementById('mediaModal'));
+                    mediaModal.show();
+                }
+            });
+
+            return button.render();
+        };
+
         // Initialize Summernote
         $('.summernote').summernote({
             height: 400,
@@ -47,17 +72,15 @@ function initializeSummernote() {
                 ['color', ['color']],
                 ['para', ['ul', 'ol', 'paragraph']],
                 ['table', ['table']],
-                ['insert', ['link', 'picture', 'video']],
+                ['insert', ['link', 'mediaLibrary', 'video']],
                 ['view', ['fullscreen', 'codeview', 'help']]
             ],
+            buttons: {
+                mediaLibrary: MediaButton
+            },
             callbacks: {
                 onInit: function() {
                     console.log('✅ Summernote initialized successfully');
-                },
-                onImageUpload: function(files) {
-                    console.log('Image upload initiated');
-                    // Handle image upload
-                    uploadSummernoteImage(files[0], $(this));
                 }
             }
         });
@@ -71,48 +94,12 @@ function initializeSummernote() {
 
 /**
  * Upload image for Summernote
+ * NOTE: This function is now deprecated. Images are inserted via Media Library modal.
+ * Keeping this for backward compatibility if direct upload is needed in the future.
  */
 function uploadSummernoteImage(file, editor) {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    // Show loading state
-    const loadingImg = $('<img>').attr('src', 'https://via.placeholder.com/100x100?text=Uploading...');
-    editor.summernote('insertNode', loadingImg[0]);
-
-    $.ajax({
-        url: '<?= base_url('dashboard/summernote/upload') ?>',
-        type: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        dataType: 'json',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        success: function(response) {
-            if (response.success) {
-                // Remove loading image
-                loadingImg.remove();
-                // Insert uploaded image
-                const uploadedImg = $('<img>').attr('src', response.url).attr('alt', response.filename);
-                editor.summernote('insertNode', uploadedImg[0]);
-            } else {
-                // Remove loading image and show error
-                loadingImg.remove();
-                alert('Image upload failed: ' + response.message);
-            }
-        },
-        error: function(xhr, status, error) {
-            // Remove loading image
-            loadingImg.remove();
-            let errorMsg = 'Upload failed. Please try again.';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMsg = xhr.responseJSON.message;
-            }
-            alert(errorMsg);
-        }
-    });
+    console.log('Direct upload is disabled. Please use Media Library button.');
+    alert('Please use the Media Library button in the toolbar to insert images.');
 }
 
 // Initialize when DOM is ready

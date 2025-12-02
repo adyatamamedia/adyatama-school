@@ -18,7 +18,7 @@ class ActivityLogs extends BaseController
     public function index()
     {
         $builder = $this->logModel
-            ->select('activity_log.*, users.username, users.fullname')
+            ->select('activity_log.*, users.username, users.fullname, users.photo')
             ->join('users', 'users.id = activity_log.user_id', 'left')
             ->orderBy('activity_log.created_at', 'DESC');
 

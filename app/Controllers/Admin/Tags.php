@@ -83,12 +83,19 @@ class Tags extends BaseController
     // Deleting a "Tag" here would imply deleting it from ALL posts using it.
     public function delete($slug)
     {
+        helper('auth');
+        
         $this->tagModel->where('slug', $slug)->delete();
+        
+        log_activity('delete_tag', 'tag', null, ['slug' => $slug]);
+        
         return redirect()->to('/dashboard/tags')->with('message', 'Tag usage removed from all posts.');
     }
 
     public function bulkDelete()
     {
+        helper('auth');
+        
         $slugs = $this->request->getPost('ids'); // ids here = slugs
 
         if (!$slugs || !is_array($slugs)) {
@@ -99,6 +106,7 @@ class Tags extends BaseController
         foreach ($slugs as $slug) {
             $deleted = $this->tagModel->where('slug', $slug)->delete();
             if ($deleted) {
+                log_activity('bulk_delete_tag', 'tag', null, ['slug' => $slug]);
                 $count++;
             }
         }

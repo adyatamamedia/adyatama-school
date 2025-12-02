@@ -2,6 +2,9 @@
 
 <?= $this->section('content') ?>
 
+<!-- Cropper.js CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+
 <style>
 .btn-group .btn.active {
     background-color: #0d6efd;
@@ -9,8 +12,102 @@
     border-color: #0d6efd;
 }
 
+/* ... existing styles ... */
+.editor-container {
+    max-height: 600px;
+    background-color: #f8f9fa;
+    text-align: center;
+    overflow: hidden;
+}
+.editor-container img {
+    max-width: 100%;
+    max-height: 500px;
+}
+
 .table-hover tbody tr:hover {
     background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Lightbox Trigger */
+.lightbox-trigger {
+    cursor: pointer !important;
+    transition: transform 0.2s ease;
+}
+
+.lightbox-trigger:hover {
+    transform: scale(1.05);
+}
+
+/* Lightbox Styles */
+.lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    z-index: 100000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.lightbox-overlay.active {
+    opacity: 1;
+}
+
+.lightbox-content {
+    max-width: 90%;
+    max-height: 90vh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.lightbox-image {
+    max-width: 100%;
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: white;
+    font-size: 35px;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    padding: 5px 12px;
+    z-index: 10000;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.lightbox-close:hover {
+    background: rgba(255, 77, 77, 0.8);
+    transform: rotate(90deg);
+}
+
+.lightbox-caption {
+    color: #fff;
+    margin-top: 10px;
+    font-size: 16px;
+    text-align: center;
+    background: rgba(0,0,0,0.6);
+    padding: 8px 16px;
+    border-radius: 20px;
 }
 </style>
 
@@ -53,9 +150,11 @@
             </button>
         </div>
         
+        <?php if (current_user()->role !== 'guru'): ?>
         <button type="button" class="btn btn-danger btn-sm me-2" id="bulkDeleteBtn" style="display:none;" onclick="bulkDelete()">
             <i class="fas fa-trash"></i> Hapus (<span id="selectedCount">0</span>)
         </button>
+        <?php endif; ?>
         <button type="button" class="btn btn-primary btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#uploadModal">
             <i class="fas fa-upload"></i> Upload
         </button>
@@ -77,17 +176,23 @@
                 <div class="card h-100 shadow-sm">
                     <div class="ratio ratio-1x1 bg-light position-relative group-action">
                         <?php if($item->type == 'image'): ?>
-                            <img src="<?= base_url($item->path) ?>" class="card-img-top object-fit-cover h-100" alt="<?= esc($item->caption) ?>">
+                            <img src="<?= base_url($item->path) ?>" 
+                                 class="card-img-top object-fit-cover h-100 lightbox-trigger" 
+                                 alt="<?= esc($item->caption) ?>" 
+                                 data-lightbox-src="<?= base_url($item->path) ?>"
+                                 data-lightbox-caption="<?= esc($item->caption) ?>">
                         <?php else: ?>
                             <div class="d-flex align-items-center justify-content-center h-100 text-muted">
                                 <i class="fas fa-file fa-2x"></i>
                             </div>
                         <?php endif; ?>
                         
-                        <!-- Checkbox for Selection (Top Left with bigger hitbox) -->
-                        <div class="position-absolute top-0 start-0 p-2" style="z-index: 10;">
-                            <input type="checkbox" class="form-check-input media-checkbox" value="<?= $item->id ?>" onchange="updateBulkDeleteButton()" style="width: 20px; height: 20px; cursor: pointer;">
+                        <!-- Checkbox for Selection (Top Left with bigger hitbox) - Hide for Guru -->
+                        <?php if (current_user()->role !== 'guru'): ?>
+                        <div class="position-absolute top-0 start-0 p-2" style="z-index: 10; pointer-events: none;">
+                            <input type="checkbox" class="form-check-input media-checkbox" value="<?= $item->id ?>" onchange="updateBulkDeleteButton()" style="width: 20px; height: 20px; cursor: pointer; pointer-events: auto;">
                         </div>
+                        <?php endif; ?>
                     </div>
                     <div class="card-body p-2">
                         <p class="card-text small text-truncate mb-1" title="<?= esc($item->caption) ?>">
@@ -99,9 +204,11 @@
                                 <button class="btn btn-sm btn-link text-primary p-0 me-2" data-bs-toggle="modal" data-bs-target="#editModal<?= $item->id ?>" title="Edit">
                                     <i class="fas fa-pen"></i>
                                 </button>
+                                <?php if (current_user()->role !== 'guru'): ?>
                                 <a href="<?= base_url('dashboard/media/delete/' . $item->id) ?>" class="text-danger small" onclick="return confirm('Delete?')" title="Delete">
                                     <i class="fas fa-trash"></i>
                                 </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -121,9 +228,11 @@
     <table class="table table-hover">
         <thead>
             <tr>
+                <?php if (current_user()->role !== 'guru'): ?>
                 <th width="40">
                     <input type="checkbox" class="form-check-input" id="selectAll" onchange="toggleSelectAll()">
                 </th>
+                <?php endif; ?>
                 <th width="80">Preview</th>
                 <th>Caption</th>
                 <th width="100">Size</th>
@@ -135,9 +244,11 @@
             <?php if (!empty($media)) : ?>
                 <?php foreach ($media as $item) : ?>
                     <tr class="media-item-list" data-caption="<?= strtolower(esc($item->caption)) ?>">
+                        <?php if (current_user()->role !== 'guru'): ?>
                         <td>
                             <input type="checkbox" class="form-check-input media-checkbox" value="<?= $item->id ?>" onchange="updateBulkDeleteButton()">
                         </td>
+                        <?php endif; ?>
                         <td>
                             <?php if($item->type == 'image'): ?>
                                 <img src="<?= base_url($item->path) ?>" alt="<?= esc($item->caption) ?>" style="width: 60px; height: 60px; object-fit: cover;" class="rounded">
@@ -160,9 +271,11 @@
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModal<?= $item->id ?>" title="Edit">
                                 <i class="fas fa-pen"></i>
                             </button>
+                            <?php if (current_user()->role !== 'guru'): ?>
                             <a href="<?= base_url('dashboard/media/delete/' . $item->id) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete?')" title="Delete">
                                 <i class="fas fa-trash"></i>
                             </a>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -180,7 +293,7 @@
 <div class="row mt-4">
     <div class="col-12">
         <nav aria-label="Page navigation">
-            <?= $pager->links('default', 'default_full', ['sort' => $sortBy, 'per_page' => $perPage]) ?>
+            <?= $pager->links('default', 'bootstrap_pagination', ['sort' => $sortBy, 'per_page' => $perPage]) ?>
         </nav>
         <div class="text-center text-muted small">
             Menampilkan <?= count($media) ?> dari <?= $pager->getTotal() ?> media
@@ -189,28 +302,105 @@
 </div>
 <?php endif; ?>
 
-<!-- Edit Caption Modals (Shared for both views) -->
+<!-- Edit Media Modals -->
 <?php if (!empty($media)) : ?>
     <?php foreach ($media as $item) : ?>
         <div class="modal fade" id="editModal<?= $item->id ?>" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-sm">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
                 <div class="modal-content">
-                    <form action="<?= base_url('dashboard/media/update/' . $item->id) ?>" method="post">
-                        <?= csrf_field() ?>
-                        <div class="modal-header">
-                            <h6 class="modal-title">Edit Caption</h6>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="mb-2">
-                                <label class="form-label small">Caption</label>
-                                <input type="text" name="caption" class="form-control form-control-sm" value="<?= esc($item->caption) ?>">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Media</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="nav nav-tabs mb-3" id="mediaTab<?= $item->id ?>" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="details-tab-<?= $item->id ?>" data-bs-toggle="tab" data-bs-target="#details-<?= $item->id ?>" type="button" role="tab">Details</button>
+                            </li>
+                            <?php if($item->type == 'image'): ?>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="editor-tab-<?= $item->id ?>" data-bs-toggle="tab" data-bs-target="#editor-<?= $item->id ?>" type="button" role="tab" onclick="initEditor('<?= $item->id ?>', '<?= base_url($item->path) ?>')">Image Editor</button>
+                            </li>
+                            <?php endif; ?>
+                        </ul>
+                        
+                        <div class="tab-content" id="mediaTabContent<?= $item->id ?>">
+                            <!-- Details Tab -->
+                            <div class="tab-pane fade show active" id="details-<?= $item->id ?>" role="tabpanel">
+                                <form action="<?= base_url('dashboard/media/update/' . $item->id) ?>" method="post">
+                                    <?= csrf_field() ?>
+                                    <div class="row">
+                                        <div class="col-md-6 text-center mb-3">
+                                            <?php if($item->type == 'image'): ?>
+                                                <img src="<?= base_url($item->path) ?>" class="img-fluid rounded border shadow-sm" style="max-height: 300px;" id="preview-img-<?= $item->id ?>">
+                                            <?php else: ?>
+                                                <div class="p-5 bg-light rounded border">
+                                                    <i class="fas fa-file fa-4x text-muted"></i>
+                                                    <p class="mt-2"><?= esc($item->type) ?></p>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Caption</label>
+                                                <input type="text" name="caption" class="form-control" value="<?= esc($item->caption) ?>">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">File Info</label>
+                                                <ul class="list-group list-group-flush small">
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span>Size:</span>
+                                                        <strong><?= round($item->filesize / 1024) ?> KB</strong>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span>Uploaded:</span>
+                                                        <strong><?= date('d M Y H:i', strtotime($item->created_at)) ?></strong>
+                                                    </li>
+                                                    <li class="list-group-item text-break">
+                                                        <span>Path:</span><br>
+                                                        <span class="text-muted"><?= $item->path ?></span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div class="d-grid">
+                                                <button type="submit" class="btn btn-primary">Save Details</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
                             </div>
+
+                            <!-- Editor Tab -->
+                            <?php if($item->type == 'image'): ?>
+                            <div class="tab-pane fade" id="editor-<?= $item->id ?>" role="tabpanel">
+                                <div class="editor-toolbar mb-2 d-flex gap-2 justify-content-center flex-wrap">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="rotateImage('<?= $item->id ?>', 'left')">
+                                        <i class="fas fa-undo"></i> Rotate Left
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="rotateImage('<?= $item->id ?>', 'right')">
+                                        <i class="fas fa-redo"></i> Rotate Right
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="btn-crop-<?= $item->id ?>" onclick="toggleCrop('<?= $item->id ?>')">
+                                        <i class="fas fa-crop"></i> Enable Crop
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="resetEditor('<?= $item->id ?>')">
+                                        <i class="fas fa-sync"></i> Reset
+                                    </button>
+                                </div>
+                                
+                                <div class="editor-container border rounded" id="editor-container-<?= $item->id ?>">
+                                    <img id="editor-img-<?= $item->id ?>" src="" alt="Editor">
+                                </div>
+                                
+                                <div class="d-grid mt-3">
+                                    <button type="button" class="btn btn-success" onclick="saveImageChanges('<?= $item->id ?>')">
+                                        <i class="fas fa-save"></i> Save Image Changes
+                                    </button>
+                                </div>
+                            </div>
+                            <?php endif; ?>
                         </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-sm btn-primary">Save</button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -244,7 +434,240 @@
   </div>
 </div>
 
+<!-- Lightbox Overlay -->
+<div id="lightbox" class="lightbox-overlay">
+    <div class="lightbox-content">
+        <button type="button" class="lightbox-close" onclick="closeLightbox()">&times;</button>
+        <img id="lightbox-img" src="" alt="" class="lightbox-image">
+        <div id="lightbox-caption" class="lightbox-caption"></div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script>
+// Image Editor Logic
+let cropperInstances = {};
+
+function initEditor(id, src) {
+    const img = document.getElementById('editor-img-' + id);
+    // Only load if empty to avoid reload flicker
+    if (!img.getAttribute('src')) {
+        img.src = src;
+    }
+}
+
+function toggleCrop(id) {
+    const img = document.getElementById('editor-img-' + id);
+    const btn = document.getElementById('btn-crop-' + id);
+    
+    if (cropperInstances[id]) {
+        // Destroy cropper
+        cropperInstances[id].destroy();
+        delete cropperInstances[id];
+        btn.classList.remove('active', 'btn-primary');
+        btn.classList.add('btn-outline-primary');
+        btn.innerHTML = '<i class="fas fa-crop"></i> Enable Crop';
+    } else {
+        // Init cropper
+        cropperInstances[id] = new Cropper(img, {
+            viewMode: 1,
+            responsive: true,
+            background: false
+        });
+        btn.classList.add('active', 'btn-primary');
+        btn.classList.remove('btn-outline-primary');
+        btn.innerHTML = '<i class="fas fa-times"></i> Disable Crop';
+    }
+}
+
+function rotateImage(id, direction) {
+    // No confirmation for rotation (instant action)
+    const action = direction === 'left' ? 'rotate_left' : 'rotate_right';
+    
+    // Add visual feedback (e.g., disable buttons temporarily or show spinner)
+    const editorContainer = document.getElementById('editor-container-' + id);
+    editorContainer.style.opacity = '0.5';
+    
+    sendEditorCommand(id, { action: action });
+}
+
+function resetEditor(id) {
+    // Reload original image (cache bust)
+    const img = document.getElementById('editor-img-' + id);
+    const currentSrc = img.src.split('?')[0];
+    img.src = currentSrc + '?t=' + new Date().getTime();
+    
+    if (cropperInstances[id]) {
+        cropperInstances[id].destroy();
+        delete cropperInstances[id];
+        const btn = document.getElementById('btn-crop-' + id);
+        btn.classList.remove('active', 'btn-primary');
+        btn.classList.add('btn-outline-primary');
+        btn.innerHTML = '<i class="fas fa-crop"></i> Enable Crop';
+    }
+}
+
+function saveImageChanges(id) {
+    console.log('saveImageChanges called for id:', id);
+    console.log('Cropper instance exists?', !!cropperInstances[id]);
+    
+    // Check if cropping is active
+    if (cropperInstances[id]) {
+        // Send crop data to server
+        const cropData = cropperInstances[id].getData();
+        const data = {
+            action: 'crop',
+            x: cropData.x,
+            y: cropData.y,
+            width: cropData.width,
+            height: cropData.height
+        };
+        console.log('Sending crop data:', data);
+        sendEditorCommand(id, data);
+    } else {
+        // No crop active, just close modal and redirect to media library
+        // (rotate changes are already saved to server)
+        console.log('No cropper active, redirecting to media library...');
+        window.location.href = '<?= base_url('dashboard/media') ?>';
+    }
+}
+
+function sendEditorCommand(id, data) {
+    // Add CSRF
+    data['<?= csrf_token() ?>'] = '<?= csrf_hash() ?>';
+    
+    // Show loading state
+    const editorContainer = document.getElementById('editor-container-' + id);
+    if(editorContainer) editorContainer.style.opacity = '0.5';
+    
+    $.ajax({
+        url: '<?= base_url('dashboard/media/edit-image/') ?>' + id,
+        type: 'POST',
+        data: data,
+        dataType: 'json',
+        success: function(response) {
+            console.log('Response received:', response);
+            console.log('Data action:', data.action);
+            
+            // Restore opacity
+            if(editorContainer) editorContainer.style.opacity = '1';
+
+            if (response && response.success) {
+                // Redirect ONLY if crop action
+                if (data.action === 'crop') {
+                    console.log('Crop successful! Redirecting to media library...');
+                    window.location.href = '<?= base_url('dashboard/media') ?>';
+                    return;
+                }
+                
+                // For rotate actions, update images on page (don't redirect)
+                console.log('Rotate successful! Updating images...');
+                const newSrc = response.new_url;
+                
+                // Update Editor Image
+                const editorImg = document.getElementById('editor-img-' + id);
+                if (editorImg) editorImg.src = newSrc;
+                
+                // Update Preview Image in Details tab
+                const previewImg = document.getElementById('preview-img-' + id);
+                if (previewImg) previewImg.src = newSrc;
+                
+                // Reset Cropper if it was active
+                if (cropperInstances[id]) {
+                    cropperInstances[id].replace(newSrc);
+                }
+            } else {
+                alert('Error: ' + response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            // Restore opacity
+            if(editorContainer) editorContainer.style.opacity = '1';
+            
+            console.error('AJAX Error:', error);
+            console.error('Response:', xhr.responseText);
+            alert('AJAX Error: ' + error);
+        }
+    });
+}
+
+// Lightbox Functions
+function openLightbox(src, caption) {
+    console.log('Opening lightbox:', src);
+    const lightbox = document.getElementById('lightbox');
+    const img = document.getElementById('lightbox-img');
+    const captionEl = document.getElementById('lightbox-caption');
+    
+    if (!lightbox || !img) {
+        console.error('Lightbox elements not found!');
+        return;
+    }
+    
+    img.src = src;
+    captionEl.textContent = caption || '';
+    
+    lightbox.style.display = 'flex';
+    setTimeout(() => {
+        lightbox.classList.add('active');
+    }, 10);
+    
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+    console.log('Closing lightbox');
+    const lightbox = document.getElementById('lightbox');
+    if (!lightbox) return;
+    
+    lightbox.classList.remove('active');
+    
+    setTimeout(() => {
+        lightbox.style.display = 'none';
+        const img = document.getElementById('lightbox-img');
+        if (img) img.src = '';
+    }, 300);
+    
+    document.body.style.overflow = '';
+}
+
+// Initialize Lightbox
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing lightbox...');
+    
+    // Add click event to all lightbox triggers
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('lightbox-trigger')) {
+            e.preventDefault();
+            const src = e.target.getAttribute('data-lightbox-src');
+            const caption = e.target.getAttribute('data-lightbox-caption');
+            console.log('Image clicked:', src);
+            openLightbox(src, caption);
+        }
+    });
+    
+    // Close on overlay click
+    const lightbox = document.getElementById('lightbox');
+    if (lightbox) {
+        lightbox.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLightbox();
+            }
+        });
+    }
+    
+    // Close on ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const lb = document.getElementById('lightbox');
+            if (lb && lb.classList.contains('active')) {
+                closeLightbox();
+            }
+        }
+    });
+    
+    console.log('Lightbox initialized successfully');
+});
+
 // Update filters (sort and per page)
 function updateFilters() {
     const sortBy = document.getElementById('sortBy').value;

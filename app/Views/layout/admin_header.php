@@ -52,8 +52,8 @@
 
             <!-- User Menu -->
             <li class="nav-item dropdown user-menu">
-                <a href="#" class="nav-link user-menu-link d-flex align-items-center gap-2" data-bs-toggle="dropdown">
-                    <img src="<?= get_user_avatar() ?>" class="user-image rounded-circle shadow-sm" alt="User Image">
+                <a href="#" class="nav-link user-menu-link" data-bs-toggle="dropdown">
+                    <img src="<?= get_user_avatar() ?>" class="user-image rounded-circle" alt="User Image">
                     <span class="d-none d-md-inline fw-medium"><?= esc(current_user()->fullname ?? 'User') ?></span>
                     <i class="fas fa-chevron-down d-none d-md-inline" style="font-size: 0.75rem; opacity: 0.7;"></i>
                 </a>
@@ -149,15 +149,26 @@
 
 .nav-link {
     position: relative;
-    display: flex;
-    align-items: center;
+    display: flex !important;
+    align-items: center !important;
     transition: all 0.3s ease;
+}
+
+/* Force remove any img spacing in nav-link */
+.nav-link img {
+    margin: 0 !important;
+    padding: 0 !important;
+    vertical-align: middle !important;
 }
 
 .user-menu-link {
     padding: 0.5rem 1rem !important;
     border-radius: 50px;
     transition: all 0.3s ease;
+    line-height: 1 !important; /* Remove extra line-height spacing */
+    display: flex !important; /* Force flex display */
+    align-items: center !important; /* Force center alignment */
+    gap: 0.5rem !important; /* Consistent spacing */
 }
 
 /* Keep active state when dropdown is open */
@@ -166,14 +177,19 @@
     background-color: rgba(102, 126, 234, 0.1);
 }
 
-/* User Image in Navbar */
+/* User Image in Navbar - Force Perfect Centering */
 .user-image {
-    width: 35px;
-    height: 35px;
+    width: 35px !important;
+    height: 35px !important;
     object-fit: cover;
     border: 2px solid rgba(102, 126, 234, 0.3);
     transition: all 0.3s ease;
-    /* Removed margin-top fix, using flex gap instead */
+    display: block !important; /* Prevent inline spacing issues */
+    flex-shrink: 0; /* Prevent flex shrinking */
+    margin: 0 !important; /* Remove any default margin */
+    padding: 0 !important; /* Remove any default padding */
+    vertical-align: middle !important; /* Force vertical align */
+    line-height: 0 !important; /* Remove line-height spacing */
 }
 
 .user-menu.show .user-menu-link .user-image,

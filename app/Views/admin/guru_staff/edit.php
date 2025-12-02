@@ -1,12 +1,12 @@
 <?= $this->extend('layout/admin_base') ?>
 
 <?= $this->section('content') ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
+<!-- <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 mb-0 text-gray-800">Edit Guru/Staff</h1>
     <a href="<?= base_url('dashboard/guru-staff') ?>" class="btn btn-secondary shadow-sm">
         <i class="fas fa-arrow-left me-1"></i>Back
     </a>
-</div>
+</div> -->
 
 <?php if (session()->getFlashdata('errors')) : ?>
     <div class="alert alert-danger alert-dismissible fade show">
@@ -85,7 +85,15 @@
                         <label for="status" class="form-label">Tipe <span class="text-danger">*</span></label>
                         <select class="form-select" id="status" name="status" required>
                             <option value="guru" <?= old('status', $staff->status) == 'guru' ? 'selected' : '' ?>>Guru</option>
-                            <option value="staff" <?= old('status', $staff->status) == 'staff' ? 'selected' : '' ?>>Staff</option>
+                            <option value="kepala-sekolah" <?= old('status', $staff->status) == 'kepala-sekolah' ? 'selected' : '' ?>>Kepala Sekolah / Madrasah</option>
+                            <option value="tenaga-administrasi" <?= old('status', $staff->status) == 'tenaga-administrasi' ? 'selected' : '' ?>>Tenaga Administrasi</option>
+                            <option value="tenaga-perpustakaan" <?= old('status', $staff->status) == 'tenaga-perpustakaan' ? 'selected' : '' ?>>Tenaga Perpustakaan</option>
+                            <option value="tenaga-laboratorium" <?= old('status', $staff->status) == 'tenaga-laboratorium' ? 'selected' : '' ?>>Tenaga Laboratorium / Teknisi</option>
+                            <option value="tenaga-kebersihan" <?= old('status', $staff->status) == 'tenaga-kebersihan' ? 'selected' : '' ?>>Tenaga Kebersihan</option>
+                            <option value="tenaga-keamanan" <?= old('status', $staff->status) == 'tenaga-keamanan' ? 'selected' : '' ?>>Tenaga Keamanan / Satpam</option>
+                            <option value="bendahara" <?= old('status', $staff->status) == 'bendahara' ? 'selected' : '' ?>>Bendahara</option>
+                            <option value="operator" <?= old('status', $staff->status) == 'operator' ? 'selected' : '' ?>>Operator</option>
+                            <option value="staff" <?= old('status', $staff->status) == 'staff' ? 'selected' : '' ?>>Staff (Umum)</option>
                         </select>
                     </div>
                     <div class="form-check form-switch">
@@ -134,41 +142,69 @@
 </form>
 
 <!-- Media Modal -->
-<?= $this->include('admin/partials/media_modal') ?>
+<?= $this->include('admin/partials/media_modal_script') ?>
 
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
 <script>
-$(document).ready(function() {
-    // Initialize Summernote
-    $('#bio').summernote({
-        height: 200,
-        placeholder: 'Tulis bio atau deskripsi singkat tentang guru/staff...',
-        toolbar: [
-            ['style', ['style']],
-            ['font', ['bold', 'italic', 'underline']],
-            ['para', ['ul', 'ol', 'paragraph']],
-            ['insert', ['link']],
-            ['view', ['fullscreen', 'help']]
-        ]
+    $(document).ready(function() {
+        // Initialize Summernote
+        $('#bio').summernote({
+            height: 200,
+            placeholder: 'Tulis bio atau deskripsi singkat tentang guru/staff...',
+            toolbar: [
+                ['style', ['style']],
+                ['font', ['bold', 'italic', 'underline']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['insert', ['link']],
+                ['view', ['fullscreen', 'help']]
+            ]
+        });
+
+        // Override selectMediaForInput for guru/staff pattern
+        setTimeout(function() {
+            window.selectMediaForInput = function(path, id) {
+                // Extract filename only (remove uploads/ prefix if exists)
+                const filename = path.replace(/^\/?(uploads\/)?/, '');
+
+                document.getElementById('foto').value = filename;
+                document.getElementById('foto_display').value = filename;
+                showFotoPreview(path);
+
+                // Close modal
+                const modalEl = document.getElementById('mediaModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+            };
+        }, 100);
     });
-});
 
-// Foto Functions
-function removeFoto() {
-    document.getElementById('foto').value = '';
-    document.getElementById('foto_display').value = '';
-    document.getElementById('foto_preview').style.display = 'none';
-    document.getElementById('foto_preview_img').src = '';
-}
+    // Foto Functions
+    function removeFoto() {
+        document.getElementById('foto').value = '';
+        document.getElementById('foto_display').value = '';
+        document.getElementById('foto_preview').style.display = 'none';
+        document.getElementById('foto_preview_img').src = '';
+    }
 
-function showFotoPreview(path) {
-    const preview = document.getElementById('foto_preview');
-    const img = document.getElementById('foto_preview_img');
-    img.src = '<?= base_url() ?>' + path;
-    preview.style.display = 'block';
-}
+    function showFotoPreview(path) {
+        const hiddenInput = document.getElementById('foto');
+        const displayInput = document.getElementById('foto_display');
+        const preview = document.getElementById('foto_preview');
+        const img = document.getElementById('foto_preview_img');
+
+        // Extract filename only (remove uploads/ prefix if exists)
+        const filename = path.replace(/^\/?(uploads\/)?/, '');
+
+        // Save only filename to database
+        hiddenInput.value = filename;
+        displayInput.value = filename;
+
+        // For preview image src, use the full path from media modal
+        img.src = '<?= base_url() ?>' + path;
+        preview.style.display = 'block';
+    }
 </script>
 <?= $this->endSection() ?>

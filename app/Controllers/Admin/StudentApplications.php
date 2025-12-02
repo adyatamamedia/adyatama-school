@@ -117,6 +117,9 @@ class StudentApplications extends BaseController
         }
 
         $this->model->update($id, ['status' => $status]);
+        
+        helper('auth');
+        log_activity('update_student_application_status', 'student_application', $id, ['status' => $status]);
 
         return redirect()->back()->with('message', 'Status berhasil diupdate.');
     }
@@ -148,6 +151,9 @@ class StudentApplications extends BaseController
         }
 
         $this->model->delete($id);
+        
+        helper('auth');
+        log_activity('delete_student_application', 'student_application', $id, ['nama' => $application['nama_lengkap'] ?? null]);
 
         return redirect()->to('/dashboard/pendaftaran')->with('message', 'Data berhasil dihapus.');
     }

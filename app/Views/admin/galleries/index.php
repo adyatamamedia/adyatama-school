@@ -28,6 +28,7 @@
                             <input type="checkbox" class="form-check-input" onchange="toggleSelectAll(this)">
                         </th>
                         <th>Title</th>
+                        <th width="150">Author</th>
                         <th width="180">Ekstrakurikuler</th>
                         <th width="100">Status</th>
                         <th width="150">Created</th>
@@ -43,9 +44,19 @@
                                 </td>
                                 <td>
                                     <div class="fw-bold"><?= esc($gallery->title) ?></div>
-                                    <?php if($gallery->description): ?>
-                                        <small class="text-muted"><?= esc(substr($gallery->description, 0, 60)) ?>...</small>
-                                    <?php endif; ?>
+                                    <small class="text-muted">/<?= esc($gallery->slug) ?></small>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <?php if(!empty($gallery->author_photo) && file_exists(FCPATH . $gallery->author_photo)): ?>
+                                            <img src="<?= base_url($gallery->author_photo) ?>" class="rounded-circle me-2" width="24" height="24" alt="">
+                                        <?php else: ?>
+                                            <div class="bg-secondary rounded-circle me-2 d-flex align-items-center justify-content-center text-white" style="width: 24px; height: 24px; font-size: 10px;">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                        <?php endif; ?>
+                                        <small class="text-truncate" style="max-width: 120px;"><?= esc($gallery->author_name ?? 'Unknown') ?></small>
+                                    </div>
                                 </td>
                                 <td>
                                     <?php if($gallery->ekskul_name): ?>

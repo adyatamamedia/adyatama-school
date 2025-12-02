@@ -85,6 +85,8 @@ class Categories extends BaseController
 
     public function create()
     {
+        helper('auth');
+        
         $rules = [
             'name' => 'required|min_length[3]|max_length[100]',
             'description' => 'permit_empty|max_length[500]'
@@ -109,6 +111,9 @@ class Categories extends BaseController
             'description' => $this->request->getPost('description'),
         ]);
 
+        $categoryId = $this->categoryModel->getInsertID();
+        log_activity('create_category', 'category', $categoryId, ['name' => $name]);
+
         return redirect()->to('/dashboard/categories')->with('message', 'Category created successfully.');
     }
 
@@ -129,6 +134,8 @@ class Categories extends BaseController
 
     public function update($id)
     {
+        helper('auth');
+        
         $category = $this->categoryModel->find($id);
         if (! $category) {
             return redirect()->to('/dashboard/categories')->with('error', 'Category not found.');
@@ -153,17 +160,27 @@ class Categories extends BaseController
             'description' => $this->request->getPost('description'),
         ]);
 
+        log_activity('update_category', 'category', $id, ['name' => $name]);
+
         return redirect()->to('/dashboard/categories')->with('message', 'Category updated successfully.');
     }
 
     public function delete($id)
     {
+        helper('auth');
+        
+        $category = $this->categoryModel->find($id);
         $this->categoryModel->delete($id);
+        
+        log_activity('delete_category', 'category', $id, ['name' => $category->name ?? null]);
+        
         return redirect()->to('/dashboard/categories')->with('message', 'Category deleted successfully.');
     }
 
     public function bulkDelete()
     {
+        helper('auth');
+        
         $ids = $this->request->getPost('ids');
 
         if (!$ids || !is_array($ids)) {
@@ -173,6 +190,7 @@ class Categories extends BaseController
         $count = 0;
         foreach ($ids as $id) {
             if ($this->categoryModel->delete($id)) {
+                log_activity('bulk_delete_category', 'category', $id);
                 $count++;
             }
         }

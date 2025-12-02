@@ -92,7 +92,7 @@ class GuruStaff extends BaseController
             'nama_lengkap' => 'required|min_length[3]|max_length[150]',
             'jabatan' => 'required|max_length[100]',
             'bidang' => 'required|max_length[100]',
-            'status' => 'required|in_list[guru,staff]',
+            'status' => 'required|in_list[guru,staff,kepala-sekolah,tenaga-administrasi,tenaga-perpustakaan,tenaga-laboratorium,tenaga-kebersihan,tenaga-keamanan,bendahara,operator]',
             'email' => 'permit_empty|valid_email',
             'foto' => 'permit_empty|max_length[255]',
             'bio' => 'permit_empty',
@@ -114,6 +114,10 @@ class GuruStaff extends BaseController
             'status' => $this->request->getPost('status'),
             'is_active' => $this->request->getPost('is_active') ? 1 : 0,
         ]);
+        
+        $staffId = $this->guruStaffModel->getInsertID();
+        helper('auth');
+        log_activity('create_guru_staff', 'guru_staff', $staffId, ['nama' => $this->request->getPost('nama_lengkap')]);
 
         return redirect()->to('/dashboard/guru-staff')->with('message', 'Data saved successfully.');
     }
@@ -144,7 +148,7 @@ class GuruStaff extends BaseController
             'nama_lengkap' => 'required|min_length[3]|max_length[150]',
             'jabatan' => 'required|max_length[100]',
             'bidang' => 'required|max_length[100]',
-            'status' => 'required|in_list[guru,staff]',
+            'status' => 'required|in_list[guru,staff,kepala-sekolah,tenaga-administrasi,tenaga-perpustakaan,tenaga-laboratorium,tenaga-kebersihan,tenaga-keamanan,bendahara,operator]',
             'email' => 'permit_empty|valid_email',
             'foto' => 'permit_empty|max_length[255]',
             'bio' => 'permit_empty',
@@ -166,18 +170,29 @@ class GuruStaff extends BaseController
             'status' => $this->request->getPost('status'),
             'is_active' => $this->request->getPost('is_active') ? 1 : 0,
         ]);
+        
+        helper('auth');
+        log_activity('update_guru_staff', 'guru_staff', $id, ['nama' => $this->request->getPost('nama_lengkap')]);
 
         return redirect()->to('/dashboard/guru-staff')->with('message', 'Data updated successfully.');
     }
 
     public function delete($id)
     {
+        helper('auth');
+        
+        $staff = $this->guruStaffModel->find($id);
         $this->guruStaffModel->delete($id);
+        
+        log_activity('delete_guru_staff', 'guru_staff', $id, ['nama' => $staff->nama_lengkap ?? null]);
+        
         return redirect()->to('/dashboard/guru-staff')->with('message', 'Data deleted successfully.');
     }
 
     public function bulkDelete()
     {
+        helper('auth');
+
         $ids = $this->request->getPost('ids');
         if (!$ids || !is_array($ids)) {
             return redirect()->back()->with('error', 'No guru/staff selected.');
@@ -186,10 +201,12 @@ class GuruStaff extends BaseController
         $count = 0;
         foreach ($ids as $id) {
             if ($this->guruStaffModel->delete($id)) {
+                log_activity('bulk_delete_guru_staff', 'guru_staff', $id);
                 $count++;
             }
         }
 
-        return redirect()->to('/dashboard/guru-staff')->with('message', "$count guru/staff deleted successfully.");
+        return redirect()->to('/dashboard/guru-staff')->with('message', $count . ' guru/staff deleted successfully.');
     }
 }
+

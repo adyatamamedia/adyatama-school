@@ -144,6 +144,28 @@ document.addEventListener('DOMContentLoaded', function() {
     window.selectMediaForInput = function(path, id = null) {
         console.log('Default selectMediaForInput called - path:', path, 'id:', id);
         
+        // Check if being called from Summernote editor
+        if (window.currentSummernoteElement && window.currentSummernoteElement.length > 0) {
+            console.log('Inserting image into Summernote editor');
+            console.log('Editor element:', window.currentSummernoteElement);
+            
+            const fullUrl = '<?= base_url() ?>' + path;
+            console.log('Full URL:', fullUrl);
+            
+            // Insert image using jQuery summernote API
+            window.currentSummernoteElement.summernote('insertImage', fullUrl);
+            
+            console.log('Image inserted successfully');
+            
+            // Clear the reference
+            window.currentSummernoteElement = null;
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+            return;
+        }
+        
         // Extract filename only (remove uploads/ prefix if exists)
         const filename = path.replace(/^\/?(uploads\/)?/, '');
         

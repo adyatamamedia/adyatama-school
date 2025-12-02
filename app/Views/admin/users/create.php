@@ -1,12 +1,12 @@
 <?= $this->extend('layout/admin_base') ?>
 
 <?= $this->section('content') ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
+<!-- <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 mb-0 text-gray-800">Create User</h1>
     <a href="<?= base_url('dashboard/users') ?>" class="btn btn-secondary shadow-sm">
         <i class="fas fa-arrow-left me-1"></i>Back
     </a>
-</div>
+</div> -->
 
 <?php if (session()->getFlashdata('errors')) : ?>
     <div class="alert alert-danger alert-dismissible fade show">
@@ -21,7 +21,7 @@
 
 <form action="<?= base_url('dashboard/users/create') ?>" method="post" enctype="multipart/form-data">
     <?= csrf_field() ?>
-    
+
     <div class="row">
         <!-- Left Column: Main Form -->
         <div class="col-md-8">
@@ -48,7 +48,12 @@
 
                     <div class="mb-3">
                         <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                        <input type="password" class="form-control" id="password" name="password" required>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                         <small class="text-muted">Minimum 8 characters</small>
                     </div>
                 </div>
@@ -90,7 +95,7 @@
                     <div class="mb-3">
                         <label for="role_id" class="form-label">Role <span class="text-danger">*</span></label>
                         <select class="form-select" id="role_id" name="role_id" required>
-                            <?php foreach($roles as $role): ?>
+                            <?php foreach ($roles as $role): ?>
                                 <option value="<?= $role->id ?>" <?= old('role_id') == $role->id ? 'selected' : '' ?>>
                                     <?= ucfirst($role->name) ?>
                                 </option>
@@ -105,7 +110,7 @@
                             <option value="inactive" <?= old('status') == 'inactive' ? 'selected' : '' ?>>Inactive</option>
                         </select>
                     </div>
-                    
+
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="fas fa-save me-1"></i>Create User
                     </button>
@@ -116,38 +121,54 @@
 </form>
 
 <script>
-function previewAvatar(event) {
-    const file = event.target.files[0];
-    const preview = document.getElementById('avatarPreview');
-    const placeholder = document.getElementById('avatarPlaceholder');
-    
-    if (file) {
-        // Check file size (2MB = 2097152 bytes)
-        if (file.size > 2097152) {
-            alert('File size exceeds 2MB. Please choose a smaller file.');
-            event.target.value = '';
-            return;
-        }
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const icon = this.querySelector('i');
         
-        // Check file type
-        if (!file.type.match('image.*')) {
-            alert('Please select an image file (JPG, PNG, GIF).');
-            event.target.value = '';
-            return;
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
         }
-        
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.src = e.target.result;
-            preview.style.display = 'block';
-            placeholder.style.display = 'none';
-        };
-        reader.readAsDataURL(file);
-    } else {
-        preview.style.display = 'none';
-        placeholder.style.display = 'block';
+    });
+
+    function previewAvatar(event) {
+        const file = event.target.files[0];
+        const preview = document.getElementById('avatarPreview');
+        const placeholder = document.getElementById('avatarPlaceholder');
+
+        if (file) {
+            // Check file size (2MB = 2097152 bytes)
+            if (file.size > 2097152) {
+                alert('File size exceeds 2MB. Please choose a smaller file.');
+                event.target.value = '';
+                return;
+            }
+
+            // Check file type
+            if (!file.type.match('image.*')) {
+                alert('Please select an image file (JPG, PNG, GIF).');
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                placeholder.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.style.display = 'none';
+            placeholder.style.display = 'block';
+        }
     }
-}
 </script>
 
 <?= $this->endSection() ?>

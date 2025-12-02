@@ -108,7 +108,7 @@ class DashboardNew extends BaseController
                 'visitor_data' => $this->getVisitorStats(7)
             ],
             'recent_activities' => $activityModel
-                ->select('activity_log.*, users.username, users.fullname as user_fullname')
+                ->select('activity_log.*, users.username, users.fullname as user_fullname, users.photo')
                 ->join('users', 'users.id = activity_log.user_id', 'left')
                 ->orderBy('activity_log.created_at', 'DESC')
                 ->limit(10)
@@ -609,7 +609,7 @@ class DashboardNew extends BaseController
             'title' => 'Dashboard Overview - Adyatama School CMS',
             'stats' => $this->getMockStats(),
             'recent_activities' => $activityModel
-                ->select('activity_log.*, users.username, users.fullname as user_fullname')
+                ->select('activity_log.*, users.username, users.fullname as user_fullname, users.photo')
                 ->join('users', 'users.id = activity_log.user_id', 'left')
                 ->orderBy('activity_log.created_at', 'DESC')
                 ->limit(10)

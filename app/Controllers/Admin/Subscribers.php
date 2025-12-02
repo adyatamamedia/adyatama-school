@@ -71,7 +71,13 @@ class Subscribers extends BaseController
 
     public function delete($id)
     {
+        helper('auth');
+        
+        $subscriber = $this->subscriberModel->find($id);
         $this->subscriberModel->delete($id);
+        
+        log_activity('delete_subscriber', 'subscriber', $id, ['email' => $subscriber->email ?? null]);
+        
         return redirect()->to('/dashboard/subscribers')->with('message', 'Subscriber deleted.');
     }
     
@@ -88,6 +94,8 @@ class Subscribers extends BaseController
 
     public function bulkDelete()
     {
+        helper('auth');
+        
         $ids = $this->request->getPost('ids');
 
         if (!$ids || !is_array($ids)) {
@@ -97,6 +105,7 @@ class Subscribers extends BaseController
         $count = 0;
         foreach ($ids as $id) {
             if ($this->subscriberModel->delete($id)) {
+                log_activity('bulk_delete_subscriber', 'subscriber', $id);
                 $count++;
             }
         }

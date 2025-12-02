@@ -10,6 +10,8 @@
         </div>
     </div>
     <div class="col-md-9 text-end">
+        <?php if (isset($extraFilters)) echo $extraFilters; ?>
+
         <?php if (isset($sortOptions) && !empty($sortOptions)): ?>
         <!-- Sort By -->
         <select class="form-select form-select-sm d-inline-block me-2" style="width: auto;" onchange="applyFilters()" id="sortBy">
@@ -61,6 +63,10 @@ function applyFilters() {
     const search = document.getElementById('searchInput').value;
     const sortBy = document.getElementById('sortBy') ? document.getElementById('sortBy').value : '';
     const perPage = document.getElementById('perPage').value;
+    
+    // Custom Filters
+    const extraFilter = document.getElementById('filterExtracurricular'); // Hardcoded for now or generic?
+
     const currentUrl = new URL(window.location.href);
     
     if (search) {
@@ -71,6 +77,14 @@ function applyFilters() {
     
     if (sortBy) {
         currentUrl.searchParams.set('sort', sortBy);
+    }
+
+    if (extraFilter) {
+        if (extraFilter.value) {
+            currentUrl.searchParams.set('extracurricular', extraFilter.value);
+        } else {
+            currentUrl.searchParams.delete('extracurricular');
+        }
     }
     
     currentUrl.searchParams.set('per_page', perPage);

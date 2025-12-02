@@ -27,6 +27,7 @@ class PageModel extends Model
         'title'  => 'required|min_length[3]|max_length[255]',
         'slug'   => 'required|is_unique[pages.slug,id,{id}]|max_length[255]',
         'status' => 'required|in_list[draft,published]',
+        'id'     => 'permit_empty|is_natural_no_zero',
     ];
     protected $validationMessages   = [];
     protected $skipValidation       = false;

@@ -11,7 +11,7 @@ class ExtracurricularModel extends Model
     protected $useAutoIncrement = true;
     protected $returnType       = 'object';
     protected $protectFields    = true;
-    protected $allowedFields    = ['name', 'description'];
+    protected $allowedFields    = ['name', 'slug', 'description'];
 
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';

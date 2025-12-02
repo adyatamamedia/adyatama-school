@@ -13,7 +13,7 @@ class GalleryModel extends Model
     protected $useSoftDeletes   = true;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'title', 'slug', 'description', 'extracurricular_id', 'status'
+        'title', 'slug', 'description', 'extracurricular_id', 'status', 'author_id', 'featured_img'
     ];
 
     protected $useTimestamps = true;

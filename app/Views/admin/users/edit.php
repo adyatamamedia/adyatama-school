@@ -1,12 +1,12 @@
 <?= $this->extend('layout/admin_base') ?>
 
 <?= $this->section('content') ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
+<!-- <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 mb-0 text-gray-800">Edit User</h1>
     <a href="<?= base_url('dashboard/users') ?>" class="btn btn-secondary shadow-sm">
         <i class="fas fa-arrow-left me-1"></i>Back
     </a>
-</div>
+</div> -->
 
 <?php if (session()->getFlashdata('errors')) : ?>
     <div class="alert alert-danger alert-dismissible fade show">
@@ -21,7 +21,7 @@
 
 <form action="<?= base_url('dashboard/users/update/' . $user->id) ?>" method="post" enctype="multipart/form-data">
     <?= csrf_field() ?>
-    
+
     <div class="row">
         <!-- Left Column: Main Form -->
         <div class="col-md-8">
@@ -48,7 +48,12 @@
 
                     <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Leave blank to keep current password">
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Leave blank to keep current password">
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                         <small class="text-muted">Leave blank if you don't want to change password</small>
                     </div>
                 </div>
@@ -98,11 +103,10 @@
 
                     <!-- Delete Photo Option -->
                     <?php if (!empty($user->photo)): ?>
-                        <div class="form-check mt-2">
-                            <input class="form-check-input" type="checkbox" id="delete_photo" name="delete_photo" value="1">
-                            <label class="form-check-label small text-danger" for="delete_photo">
-                                <i class="fas fa-trash me-1"></i>Delete current photo
-                            </label>
+                        <div class="mt-2" id="deletePhotoContainer">
+                            <button type="button" class="btn btn-outline-danger btn-sm w-100" id="btnDeletePhoto" onclick="deletePhoto(<?= $user->id ?>)">
+                                <i class="fas fa-trash me-1"></i>Delete Current Photo
+                            </button>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -117,7 +121,7 @@
                     <div class="mb-3">
                         <label for="role_id" class="form-label">Role <span class="text-danger">*</span></label>
                         <select class="form-select" id="role_id" name="role_id" required>
-                            <?php foreach($roles as $role): ?>
+                            <?php foreach ($roles as $role): ?>
                                 <option value="<?= $role->id ?>" <?= old('role_id', $user->role_id) == $role->id ? 'selected' : '' ?>>
                                     <?= ucfirst($role->name) ?>
                                 </option>
@@ -132,7 +136,7 @@
                             <option value="inactive" <?= old('status', $user->status) == 'inactive' ? 'selected' : '' ?>>Inactive</option>
                         </select>
                     </div>
-                    
+
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="fas fa-save me-1"></i>Update User
                     </button>
@@ -142,52 +146,147 @@
     </div>
 </form>
 
+<!-- Include Delete Photo Modal -->
+<?= $this->include('admin/partials/delete_photo_modal') ?>
+
 <script>
-function previewAvatar(event) {
-    const file = event.target.files[0];
-    const preview = document.getElementById('avatarPreview');
-    const placeholder = document.getElementById('avatarPlaceholder');
-    const deleteCheckbox = document.getElementById('delete_photo');
-    
-    if (file) {
-        // Check file size (2MB = 2097152 bytes)
-        if (file.size > 2097152) {
-            alert('File size exceeds 2MB. Please choose a smaller file.');
-            event.target.value = '';
-            return;
-        }
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const icon = this.querySelector('i');
         
-        // Check file type
-        if (!file.type.match('image.*')) {
-            alert('Please select an image file (JPG, PNG, GIF).');
-            event.target.value = '';
-            return;
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
         }
+    });
+
+    let deletePhotoModal;
+    let userIdToDelete;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        deletePhotoModal = new bootstrap.Modal(document.getElementById('deletePhotoModal'));
         
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.src = e.target.result;
-            preview.style.display = 'block';
-            placeholder.style.display = 'none';
-        };
-        reader.readAsDataURL(file);
-        
-        // Uncheck delete photo if new file selected
-        if (deleteCheckbox) {
-            deleteCheckbox.checked = false;
-        }
-    } else {
-        // If no new file and there's an existing photo
-        <?php if (!empty($user->photo) && file_exists(FCPATH . $user->photo)): ?>
-            preview.src = '<?= base_url($user->photo) ?>';
-            preview.style.display = 'block';
-            placeholder.style.display = 'none';
-        <?php else: ?>
-            preview.style.display = 'none';
-            placeholder.style.display = 'block';
-        <?php endif; ?>
+        document.getElementById('confirmDeletePhotoBtn').addEventListener('click', function() {
+            performDeletePhoto();
+        });
+    });
+
+    function deletePhoto(userId) {
+        userIdToDelete = userId;
+        deletePhotoModal.show();
     }
-}
+
+    function performDeletePhoto() {
+        const btn = document.getElementById('confirmDeletePhotoBtn');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Deleting...';
+
+        fetch(`<?= base_url('dashboard/users/delete-photo') ?>/${userIdToDelete}`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                '<?= csrf_header() ?>': '<?= csrf_hash() ?>'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            deletePhotoModal.hide();
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+
+            if (data.success) {
+                // Hide preview and show placeholder
+                const preview = document.getElementById('avatarPreview');
+                const placeholder = document.getElementById('avatarPlaceholder');
+                const container = document.getElementById('deletePhotoContainer');
+                const currentInfo = document.querySelector('.text-muted .text-success');
+
+                if (preview) {
+                    preview.src = '';
+                    preview.style.display = 'none';
+                }
+                
+                if (placeholder) {
+                    placeholder.style.display = 'flex';
+                    placeholder.style.alignItems = 'center';
+                    placeholder.style.justifyContent = 'center';
+                }
+
+                if (container) {
+                    container.remove();
+                }
+
+                if (currentInfo) {
+                    currentInfo.closest('.mb-2').remove();
+                }
+                
+                // Show success toast/alert if needed, currently just silent success based on user preference "no alert"
+                // or we can use a toast notification here if available in the system
+            } else {
+                alert('Failed to delete photo: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            deletePhotoModal.hide();
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            alert('An error occurred while deleting the photo');
+        });
+    }
+
+    function previewAvatar(event) {
+        const file = event.target.files[0];
+        const preview = document.getElementById('avatarPreview');
+        const placeholder = document.getElementById('avatarPlaceholder');
+        const deleteCheckbox = document.getElementById('delete_photo');
+
+        if (file) {
+            // Check file size (2MB = 2097152 bytes)
+            if (file.size > 2097152) {
+                alert('File size exceeds 2MB. Please choose a smaller file.');
+                event.target.value = '';
+                return;
+            }
+
+            // Check file type
+            if (!file.type.match('image.*')) {
+                alert('Please select an image file (JPG, PNG, GIF).');
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                placeholder.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+
+            // Uncheck delete photo if new file selected
+            if (deleteCheckbox) {
+                deleteCheckbox.checked = false;
+            }
+        } else {
+            // If no new file and there's an existing photo
+            <?php if (!empty($user->photo) && file_exists(FCPATH . $user->photo)): ?>
+                preview.src = '<?= base_url($user->photo) ?>';
+                preview.style.display = 'block';
+                placeholder.style.display = 'none';
+            <?php else: ?>
+                preview.style.display = 'none';
+                placeholder.style.display = 'block';
+            <?php endif; ?>
+        }
+    }
 </script>
 
 <?= $this->endSection() ?>

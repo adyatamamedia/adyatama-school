@@ -36,7 +36,10 @@ if (! function_exists('current_user')) {
 if (! function_exists('user_can')) {
     /**
      * Checks if the current user has a specific permission.
-     * NOTE: Simplified for now (role-based check), will expand with permissions table later.
+     * Role-based access control:
+     * - admin: full access
+     * - operator: full access except user management
+     * - guru: posts and galleries only
      */
     function user_can(string $permission): bool
     {
@@ -46,13 +49,58 @@ if (! function_exists('user_can')) {
 
         $role = session('role');
 
-        // Super admin bypass
+        // Admin has full access
         if ($role === 'admin') {
             return true;
         }
 
-        // TODO: Implement real permission check against role_permissions table
+        // Operator has full access (can manage users but with restrictions)
+        if ($role === 'operator') {
+            return true;
+        }
+
+        // Guru only has access to posts and galleries
+        if ($role === 'guru') {
+            $allowedPermissions = ['manage_posts', 'manage_galleries'];
+            return in_array($permission, $allowedPermissions);
+        }
+
         return false; 
+    }
+}
+
+if (! function_exists('can_access_menu')) {
+    /**
+     * Check if user can access a specific menu
+     * 
+     * @param string $menu Menu identifier
+     * @return bool
+     */
+    function can_access_menu(string $menu): bool
+    {
+        if (! logged_in()) {
+            return false;
+        }
+
+        $role = session('role');
+
+        // Admin has access to everything
+        if ($role === 'admin') {
+            return true;
+        }
+
+        // Operator has access to everything (including users)
+        if ($role === 'operator') {
+            return true;
+        }
+
+        // Guru only has access to posts and galleries (and media for uploading)
+        if ($role === 'guru') {
+            $allowedMenus = ['posts', 'galleries', 'media'];
+            return in_array($menu, $allowedMenus);
+        }
+
+        return false;
     }
 }
 

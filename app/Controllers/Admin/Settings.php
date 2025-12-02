@@ -127,6 +127,9 @@ class Settings extends BaseController
                 ]);
             }
         }
+        
+        helper('auth');
+        log_activity('update_settings', 'settings', null, ['groups' => array_keys($postData)]);
 
         return redirect()->to('/dashboard/settings')->with('message', 'Settings updated successfully.');
     }

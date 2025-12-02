@@ -38,6 +38,11 @@ class Posts extends BaseController
             ->join('categories', 'categories.id = posts.category_id', 'left')
             ->join('users', 'users.id = posts.author_id', 'left');
         
+        // Restrict 'guru' to only see their own posts
+        if (current_user()->role == 'guru') {
+            $builder->where('posts.author_id', current_user()->id);
+        }
+
         // Apply search
         if ($search) {
             $builder->groupStart()
@@ -52,7 +57,7 @@ class Posts extends BaseController
             $builder->where('posts.category_id', $filterCategory);
         }
         
-        // Apply author filter
+        // Apply author filter (only relevant if not guru, or if guru filters their own - which is redundant but harmless)
         if ($filterAuthor) {
             $builder->where('posts.author_id', $filterAuthor);
         }
@@ -240,7 +245,7 @@ class Posts extends BaseController
         }
     }
 
-        log_activity('create_post', 'post', $postId);
+        log_activity('create_post', 'post', $postId, ['title' => $title]);
 
         // Add notification about YouTube thumbnail if it was auto-fetched
         $message = 'Post created successfully.';
@@ -256,6 +261,11 @@ class Posts extends BaseController
         $post = $this->postModel->find($id);
         if (! $post) {
             return redirect()->to('/dashboard/posts')->with('error', 'Post not found.');
+        }
+
+        // Check ownership for 'guru'
+        if (current_user()->role == 'guru' && $post->author_id != current_user()->id) {
+            return redirect()->to('/dashboard/posts')->with('error', 'You do not have permission to edit this post.');
         }
 
         // Load featured media if exists
@@ -287,6 +297,11 @@ class Posts extends BaseController
         $post = $this->postModel->find($id);
         if (! $post) {
             return redirect()->to('/dashboard/posts')->with('error', 'Post not found.');
+        }
+
+        // Check ownership for 'guru'
+        if (current_user()->role == 'guru' && $post->author_id != current_user()->id) {
+            return redirect()->to('/dashboard/posts')->with('error', 'You do not have permission to update this post.');
         }
         
         // Debug: Log all POST data
@@ -480,7 +495,7 @@ class Posts extends BaseController
             // Don't fail the whole update if Tags fails
         }
 
-        log_activity('update_post', 'post', $id);
+        log_activity('update_post', 'post', $id, ['title' => $data['title']]);
 
         // Add notification about YouTube thumbnail if it was auto-fetched
         $message = 'Post updated successfully.';
@@ -493,8 +508,16 @@ class Posts extends BaseController
 
     public function delete($id)
     {
+        $post = $this->postModel->find($id);
+        if (!$post) return redirect()->to('/dashboard/posts')->with('error', 'Post not found.');
+
+        // Check ownership for 'guru'
+        if (current_user()->role == 'guru' && $post->author_id != current_user()->id) {
+            return redirect()->to('/dashboard/posts')->with('error', 'You do not have permission to delete this post.');
+        }
+
         $this->postModel->delete($id);
-        log_activity('delete_post', 'post', $id);
+        log_activity('delete_post', 'post', $id, ['title' => $post->title ?? null]);
         return redirect()->to('/dashboard/posts')->with('message', 'Post deleted successfully.');
     }
 
@@ -507,14 +530,29 @@ class Posts extends BaseController
         }
 
         $count = 0;
+        $skipped = 0;
         foreach ($ids as $id) {
-            if ($this->postModel->delete($id)) {
-                log_activity('bulk_delete_post', 'post', $id);
-                $count++;
+            $post = $this->postModel->find($id);
+            if ($post) {
+                // Check ownership for 'guru'
+                if (current_user()->role == 'guru' && $post->author_id != current_user()->id) {
+                    $skipped++;
+                    continue;
+                }
+
+                if ($this->postModel->delete($id)) {
+                    log_activity('bulk_delete_post', 'post', $id);
+                    $count++;
+                }
             }
         }
 
-        return redirect()->to('/dashboard/posts')->with('message', "$count post(s) deleted successfully.");
+        $message = "$count post(s) deleted successfully.";
+        if ($skipped > 0) {
+            $message .= " $skipped post(s) skipped due to permission.";
+        }
+
+        return redirect()->to('/dashboard/posts')->with('message', $message);
     }
 
     public function bulkDraft()
@@ -596,8 +634,12 @@ class Posts extends BaseController
     {
         // Restore specific post
         $db = \Config\Database::connect();
+        
+        // Get post title before restore
+        $post = $db->table('posts')->where('id', $id)->get()->getRow();
+        
         $db->table('posts')->where('id', $id)->update(['deleted_at' => null]);
-        log_activity('restore_post', 'post', $id);
+        log_activity('restore_post', 'post', $id, ['title' => $post->title ?? null]);
         return redirect()->to('/dashboard/posts/trash')->with('message', 'Post restored successfully.');
     }
 

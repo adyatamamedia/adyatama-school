@@ -79,7 +79,15 @@
                         <label for="status" class="form-label">Tipe <span class="text-danger">*</span></label>
                         <select class="form-select" id="status" name="status" required>
                             <option value="guru" <?= old('status') == 'guru' ? 'selected' : 'selected' ?>>Guru</option>
-                            <option value="staff" <?= old('status') == 'staff' ? 'selected' : '' ?>>Staff</option>
+                            <option value="kepala-sekolah" <?= old('status') == 'kepala-sekolah' ? 'selected' : '' ?>>Kepala Sekolah / Madrasah</option>
+                            <option value="tenaga-administrasi" <?= old('status') == 'tenaga-administrasi' ? 'selected' : '' ?>>Tenaga Administrasi</option>
+                            <option value="tenaga-perpustakaan" <?= old('status') == 'tenaga-perpustakaan' ? 'selected' : '' ?>>Tenaga Perpustakaan</option>
+                            <option value="tenaga-laboratorium" <?= old('status') == 'tenaga-laboratorium' ? 'selected' : '' ?>>Tenaga Laboratorium / Teknisi</option>
+                            <option value="tenaga-kebersihan" <?= old('status') == 'tenaga-kebersihan' ? 'selected' : '' ?>>Tenaga Kebersihan</option>
+                            <option value="tenaga-keamanan" <?= old('status') == 'tenaga-keamanan' ? 'selected' : '' ?>>Tenaga Keamanan / Satpam</option>
+                            <option value="bendahara" <?= old('status') == 'bendahara' ? 'selected' : '' ?>>Bendahara</option>
+                            <option value="operator" <?= old('status') == 'operator' ? 'selected' : '' ?>>Operator</option>
+                            <option value="staff" <?= old('status') == 'staff' ? 'selected' : '' ?>>Staff (Umum)</option>
                         </select>
                     </div>
                     <div class="form-check form-switch">

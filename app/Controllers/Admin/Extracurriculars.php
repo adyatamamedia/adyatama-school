@@ -84,6 +84,7 @@ class Extracurriculars extends BaseController
 
     public function create()
     {
+        helper('url');
         $rules = [
             'name' => 'required|min_length[3]|max_length[120]|is_unique[extracurriculars.name]',
             'description' => 'permit_empty',
@@ -95,8 +96,13 @@ class Extracurriculars extends BaseController
 
         $this->ekskulModel->save([
             'name' => $this->request->getPost('name'),
+            'slug' => url_title($this->request->getPost('name'), '-', true),
             'description' => $this->request->getPost('description'),
         ]);
+        
+        $ekskulId = $this->ekskulModel->getInsertID();
+        helper('auth');
+        log_activity('create_extracurricular', 'extracurricular', $ekskulId, ['name' => $this->request->getPost('name')]);
 
         return redirect()->to('/dashboard/extracurriculars')->with('message', 'Extracurricular created successfully.');
     }
@@ -118,6 +124,7 @@ class Extracurriculars extends BaseController
 
     public function update($id)
     {
+        helper('url');
         $ekskul = $this->ekskulModel->find($id);
         if (! $ekskul) {
             return redirect()->to('/dashboard/extracurriculars')->with('error', 'Data not found.');
@@ -134,20 +141,32 @@ class Extracurriculars extends BaseController
 
         $this->ekskulModel->update($id, [
             'name' => $this->request->getPost('name'),
+            'slug' => url_title($this->request->getPost('name'), '-', true),
             'description' => $this->request->getPost('description'),
         ]);
+        
+        helper('auth');
+        log_activity('update_extracurricular', 'extracurricular', $id, ['name' => $this->request->getPost('name')]);
 
         return redirect()->to('/dashboard/extracurriculars')->with('message', 'Extracurricular updated successfully.');
     }
 
     public function delete($id)
     {
+        helper('auth');
+        
+        $ekskul = $this->ekskulModel->find($id);
         $this->ekskulModel->delete($id);
+        
+        log_activity('delete_extracurricular', 'extracurricular', $id, ['name' => $ekskul->name ?? null]);
+        
         return redirect()->to('/dashboard/extracurriculars')->with('message', 'Extracurricular deleted successfully.');
     }
 
     public function bulkDelete()
     {
+        helper('auth');
+        
         $ids = $this->request->getPost('ids');
 
         if (!$ids || !is_array($ids)) {
@@ -157,6 +176,7 @@ class Extracurriculars extends BaseController
         $count = 0;
         foreach ($ids as $id) {
             if ($this->ekskulModel->delete($id)) {
+                log_activity('bulk_delete_extracurricular', 'extracurricular', $id);
                 $count++;
             }
         }

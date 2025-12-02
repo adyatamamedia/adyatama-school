@@ -110,7 +110,7 @@ if (!function_exists('getActivityIcon')) {
 
 if (!function_exists('getActivityDescription')) {
     /**
-     * Get formatted activity description
+     * Get formatted activity description with title/name from metadata
      */
     function getActivityDescription($log)
     {
@@ -120,36 +120,71 @@ if (!function_exists('getActivityDescription')) {
             'logout' => 'Logout dari sistem',
 
             // Post
-            'create_post' => 'Membuat artikel baru',
+            'create_post' => 'Membuat artikel',
             'update_post' => 'Mengupdate artikel',
             'delete_post' => 'Menghapus artikel',
-            'publish_post' => 'Mempublikasi artikel',
-            'draft_post' => 'Menyimpan artikel sebagai draft',
+            'bulk_delete_post' => 'Menghapus artikel (bulk)',
+            'bulk_draft_post' => 'Menyimpan artikel sebagai draft (bulk)',
+            'bulk_publish_post' => 'Mempublikasi artikel (bulk)',
+            'restore_post' => 'Restore artikel',
+            'bulk_restore_post' => 'Restore artikel (bulk)',
+            'bulk_force_delete_post' => 'Menghapus permanen artikel (bulk)',
 
             // Page
-            'create_page' => 'Membuat halaman baru',
+            'create_page' => 'Membuat halaman',
             'update_page' => 'Mengupdate halaman',
             'delete_page' => 'Menghapus halaman',
+            'bulk_delete_page' => 'Menghapus halaman (bulk)',
+            'bulk_draft_page' => 'Menyimpan halaman sebagai draft (bulk)',
+            'bulk_publish_page' => 'Mempublikasi halaman (bulk)',
 
             // Category
-            'create_category' => 'Membuat kategori baru',
+            'create_category' => 'Membuat kategori',
             'update_category' => 'Mengupdate kategori',
             'delete_category' => 'Menghapus kategori',
+            'bulk_delete_category' => 'Menghapus kategori (bulk)',
+
+            // Tag
+            'delete_tag' => 'Menghapus tag',
+            'bulk_delete_tag' => 'Menghapus tag (bulk)',
 
             // User
-            'create_user' => 'Membuat user baru',
-            'update_user' => 'Mengupdate data user',
+            'create_user' => 'Membuat user',
+            'update_user' => 'Mengupdate user',
             'delete_user' => 'Menghapus user',
+            'bulk_delete_user' => 'Menghapus user (bulk)',
 
             // Media
-            'upload_media' => 'Upload file media',
-            'delete_media' => 'Menghapus file media',
-            'update_media' => 'Mengupdate file media',
+            'upload_media' => 'Upload media',
+            'update_media_caption' => 'Mengupdate caption media',
+            'delete_media' => 'Menghapus media',
+            'bulk_delete_media' => 'Menghapus media (bulk)',
 
             // Gallery
-            'create_gallery' => 'Membuat galeri baru',
+            'create_gallery' => 'Membuat galeri',
             'update_gallery' => 'Mengupdate galeri',
             'delete_gallery' => 'Menghapus galeri',
+            'bulk_delete_gallery' => 'Menghapus galeri (bulk)',
+
+            // Guru/Staff
+            'create_guru_staff' => 'Menambah guru/staff',
+            'update_guru_staff' => 'Mengupdate guru/staff',
+            'delete_guru_staff' => 'Menghapus guru/staff',
+            'bulk_delete_guru_staff' => 'Menghapus guru/staff (bulk)',
+
+            // Extracurricular
+            'create_extracurricular' => 'Membuat ekstrakurikuler',
+            'update_extracurricular' => 'Mengupdate ekstrakurikuler',
+            'delete_extracurricular' => 'Menghapus ekstrakurikuler',
+            'bulk_delete_extracurricular' => 'Menghapus ekstrakurikuler (bulk)',
+
+            // Student Application
+            'update_student_application_status' => 'Update status pendaftaran siswa',
+            'delete_student_application' => 'Menghapus pendaftaran siswa',
+
+            // Subscriber
+            'delete_subscriber' => 'Menghapus subscriber',
+            'bulk_delete_subscriber' => 'Menghapus subscriber (bulk)',
 
             // Settings
             'update_settings' => 'Mengupdate pengaturan sistem',
@@ -160,11 +195,41 @@ if (!function_exists('getActivityDescription')) {
 
         $description = $descriptions[$log->action] ?? ucfirst(str_replace('_', ' ', $log->action));
 
-        // Add meta info if available
+        // Add title/name from metadata
         if ($log->meta) {
             $meta = json_decode($log->meta, true);
-            if (isset($meta['nama_lengkap'])) {
-                $description .= ': <strong>' . esc($meta['nama_lengkap']) . '</strong>';
+            
+            // Extract title/name based on available keys in metadata
+            $displayName = null;
+            
+            if (isset($meta['title'])) {
+                $displayName = $meta['title'];
+            } elseif (isset($meta['name'])) {
+                $displayName = $meta['name'];
+            } elseif (isset($meta['nama'])) {
+                $displayName = $meta['nama'];
+            } elseif (isset($meta['username'])) {
+                $displayName = $meta['username'];
+            } elseif (isset($meta['email'])) {
+                $displayName = $meta['email'];
+            } elseif (isset($meta['filename'])) {
+                $displayName = $meta['filename'];
+            } elseif (isset($meta['slug'])) {
+                $displayName = $meta['slug'];
+            } elseif (isset($meta['caption'])) {
+                $displayName = $meta['caption'];
+            }
+            
+            if ($displayName) {
+                $description .= ': <strong class="text-primary">' . esc($displayName) . '</strong>';
+            }
+            
+            // Add additional info (role, status, etc)
+            if (isset($meta['role']) && $meta['role']) {
+                $description .= ' <span class="badge bg-info">' . esc($meta['role']) . '</span>';
+            }
+            if (isset($meta['status']) && $meta['status']) {
+                $description .= ' <span class="badge bg-warning text-dark">' . esc($meta['status']) . '</span>';
             }
         }
 

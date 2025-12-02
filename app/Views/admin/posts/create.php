@@ -118,7 +118,7 @@
                                 </select>
                             </div>
 
-                            <?php if (current_user()->role == 'admin'): ?>
+                            <?php if (current_user()->role == 'admin' || current_user()->role == 'operator'): ?>
                                 <div class="mb-3">
                                     <label for="author_id" class="form-label">Author</label>
                                     <select class="form-select" id="author_id" name="author_id">
@@ -129,6 +129,8 @@
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
+                            <?php else: ?>
+                                <input type="hidden" name="author_id" value="<?= current_user()->id ?>">
                             <?php endif; ?>
 
                             <!-- Featured Image Selector -->

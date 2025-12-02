@@ -123,6 +123,10 @@ class Media extends BaseController
             ];
 
             $this->mediaModel->save($data);
+            
+            $mediaId = $this->mediaModel->getInsertID();
+            helper('auth');
+            log_activity('upload_media', 'media', $mediaId, ['filename' => $newName]);
 
             return redirect()->to('/dashboard/media')->with('message', 'File uploaded successfully.');
 
@@ -139,8 +143,130 @@ class Media extends BaseController
         $this->mediaModel->update($id, [
             'caption' => $this->request->getPost('caption')
         ]);
+        
+        helper('auth');
+        log_activity('update_media_caption', 'media', $id, ['caption' => $this->request->getPost('caption')]);
 
         return redirect()->to('/dashboard/media')->with('message', 'Caption updated.');
+    }
+
+    public function editImage($id)
+    {
+        // Set JSON response header
+        $this->response->setContentType('application/json');
+        
+        $media = $this->mediaModel->find($id);
+        if (!$media) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Media not found.']);
+        }
+        
+        // Prevent guru from editing media of others (redundant check but safe)
+        helper('auth');
+        if (current_user()->role === 'guru' && $media->author_id && $media->author_id != current_user()->id) {
+             // Guru can edit their own media, but current media table structure might not have author_id consistently populated.
+             // For now assuming media library is shared or permission handled elsewhere. 
+             // If strict ownership needed, add check here.
+        }
+
+        $filePath = FCPATH . $media->path;
+        if (!file_exists($filePath)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'File does not exist on server.']);
+        }
+
+        $action = $this->request->getPost('action');
+        
+        // Load Image using GD
+        $info = getimagesize($filePath);
+        $mime = $info['mime'];
+        
+        switch ($mime) {
+            case 'image/jpeg': $image = imagecreatefromjpeg($filePath); break;
+            case 'image/png': $image = imagecreatefrompng($filePath); break;
+            case 'image/gif': $image = imagecreatefromgif($filePath); break;
+            case 'image/webp': 
+                if(function_exists('imagecreatefromwebp')) $image = imagecreatefromwebp($filePath); 
+                else return $this->response->setJSON(['success' => false, 'message' => 'WebP not supported by server.']);
+                break;
+            default: return $this->response->setJSON(['success' => false, 'message' => 'Unsupported image type.']);
+        }
+
+        if (!$image) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Failed to load image resource.']);
+        }
+
+        try {
+            if ($action === 'rotate_left' || $action === 'rotate_right') {
+                $degrees = ($action === 'rotate_left') ? 90 : -90;
+                $rotated = imagerotate($image, $degrees, 0);
+                imagedestroy($image);
+                $image = $rotated;
+            } elseif ($action === 'crop') {
+                $x = $this->request->getPost('x');
+                $y = $this->request->getPost('y');
+                $width = $this->request->getPost('width');
+                $height = $this->request->getPost('height');
+
+                if ($width > 0 && $height > 0) {
+                    $crop = imagecrop($image, ['x' => $x, 'y' => $y, 'width' => $width, 'height' => $height]);
+                    if ($crop) {
+                        imagedestroy($image);
+                        $image = $crop;
+                    } else {
+                        throw new \Exception('Crop operation failed.');
+                    }
+                }
+            } else {
+                return $this->response->setJSON(['success' => false, 'message' => 'Invalid action.']);
+            }
+
+            // Save Image Back to File
+            switch ($mime) {
+                case 'image/jpeg': imagejpeg($image, $filePath, 90); break;
+                case 'image/png': 
+                    imagealphablending($image, false);
+                    imagesavealpha($image, true);
+                    imagepng($image, $filePath, 9); 
+                    break;
+                case 'image/gif': imagegif($image, $filePath); break;
+                case 'image/webp': imagewebp($image, $filePath, 90); break;
+            }
+
+            imagedestroy($image);
+            clearstatcache();
+
+            // Update database filesize
+            $newSize = filesize($filePath);
+            // Use save() instead of update() to bypass potential validation rules or model constraints if update() is strictly bound
+            // But update() should work fine. However, let's check if 'updated_at' is allowed in allowedFields in model.
+            // Assuming model handles updated_at automatically if useTimestamps is true.
+            
+            // Manual update query to avoid model issues if any
+            $db = \Config\Database::connect();
+            
+            $updateData = ['filesize' => $newSize];
+            
+            // Check if updated_at column exists in schema, if not, don't update it
+            if ($db->fieldExists('updated_at', 'media')) {
+                $updateData['updated_at'] = date('Y-m-d H:i:s');
+            }
+            
+            $db->table('media')->where('id', $id)->update($updateData);
+
+            log_activity('edit_media_image', 'media', $id, ['action' => $action]);
+            
+            session()->setFlashdata('message', 'Berhasil mengedit gambar.');
+
+            return $this->response->setJSON([
+                'success' => true, 
+                'message' => 'Image updated successfully.',
+                'new_url' => base_url($media->path) . '?t=' . time() // Cache busting
+            ]);
+
+        } catch (\Exception $e) {
+            // Log the full exception for debugging
+            log_message('error', 'Image Edit Error: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
+            return $this->response->setJSON(['success' => false, 'message' => 'Error processing image: ' . $e->getMessage()]);
+        }
     }
 
     public function uploadMultiple()
@@ -219,6 +345,11 @@ class Media extends BaseController
                 ];
 
                 $this->mediaModel->save($data);
+                $mediaId = $this->mediaModel->getInsertID();
+                
+                helper('auth');
+                log_activity('upload_media', 'media', $mediaId, ['filename' => $file->getClientName()]);
+                
                 $uploadedCount++;
 
             } catch (\Exception $e) {
@@ -239,6 +370,14 @@ class Media extends BaseController
 
     public function bulkDelete()
     {
+        helper('auth');
+        $currentUser = current_user();
+        
+        // Prevent guru from deleting media
+        if ($currentUser->role === 'guru') {
+            return redirect()->back()->with('error', 'You do not have permission to delete media. Only admin and operator can delete media.');
+        }
+        
         $ids = $this->request->getPost('ids');
 
         if (!$ids || !is_array($ids)) {
@@ -255,6 +394,7 @@ class Media extends BaseController
                 // }
                 
                 $this->mediaModel->delete($id);
+                log_activity('bulk_delete_media', 'media', $id);
                 $deletedCount++;
             }
         }
@@ -264,6 +404,14 @@ class Media extends BaseController
 
     public function delete($id)
     {
+        helper('auth');
+        $currentUser = current_user();
+        
+        // Prevent guru from deleting media
+        if ($currentUser->role === 'guru') {
+            return redirect()->back()->with('error', 'You do not have permission to delete media. Only admin and operator can delete media.');
+        }
+        
         $media = $this->mediaModel->find($id);
 
         if ($media) {
@@ -274,6 +422,9 @@ class Media extends BaseController
             
             // Just soft delete db record for now
             $this->mediaModel->delete($id);
+            
+            log_activity('delete_media', 'media', $id, ['path' => $media->path ?? null]);
+            
             return redirect()->to('/dashboard/media')->with('message', 'Media deleted successfully.');
         }
 

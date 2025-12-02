@@ -56,6 +56,9 @@
                     <i class="fas fa-<?= $action['icon'] ?>"></i> <?= $action['label'] ?> (<span class="bulk-count">0</span>)
                 </button>
             <?php endforeach; ?>
+             <button type="button" class="btn btn-success" onclick="bulkAction('approve', 'Terima pendaftaran terpilih?')">
+                <i class="fas fa-check"></i> Terima (<span class="bulk-count">0</span>)
+            </button>
         </div>
 
         <!-- Export Excel Button -->
@@ -239,39 +242,39 @@ function bulkAction(action, confirmMsg) {
                                     </small>
                                 </td>
                                 <td class="text-center">
-                                    <div class="btn-group" role="group">
+                                    <div class="d-flex justify-content-center gap-1">
                                         <!-- View Detail -->
                                         <a href="<?= base_url('dashboard/pendaftaran/view/' . $app['id']) ?>" 
-                                           class="btn btn-sm btn-outline-info" 
+                                           class="btn btn-sm btn-info text-white" 
                                            title="Lihat Detail">
                                             <i class="fas fa-eye"></i>
+                                        </a>
+
+                                        <!-- Export DOC -->
+                                        <a href="<?= base_url('dashboard/pendaftaran/export-doc/' . $app['id']) ?>" 
+                                           class="btn btn-sm btn-primary" 
+                                           title="Export ke DOC">
+                                            <i class="fas fa-file-word"></i>
                                         </a>
 
                                         <!-- Toggle Status: Pending <-> Accepted -->
                                         <form method="post" action="<?= base_url('dashboard/pendaftaran/update-status/' . $app['id']) ?>" style="display:inline;">
                                             <?php if($app['status'] == 'pending'): ?>
                                                 <input type="hidden" name="status" value="accepted">
-                                                <button type="submit" class="btn btn-sm btn-outline-success" title="Terima Pendaftaran">
+                                                <button type="submit" class="btn btn-sm btn-success" title="Terima Pendaftaran">
                                                     <i class="fas fa-check"></i>
                                                 </button>
                                             <?php else: ?>
                                                 <input type="hidden" name="status" value="pending">
-                                                <button type="submit" class="btn btn-sm btn-outline-warning" title="Kembalikan ke Pending">
+                                                <button type="submit" class="btn btn-sm btn-warning text-white" title="Kembalikan ke Pending">
                                                     <i class="fas fa-undo"></i>
                                                 </button>
                                             <?php endif; ?>
                                         </form>
 
-                                        <!-- Export DOC -->
-                                        <a href="<?= base_url('dashboard/pendaftaran/export-doc/' . $app['id']) ?>" 
-                                           class="btn btn-sm btn-outline-primary" 
-                                           title="Export ke DOC">
-                                            <i class="fas fa-file-word"></i>
-                                        </a>
-
                                         <!-- Delete -->
                                         <button type="button" 
-                                                class="btn btn-sm btn-outline-danger" 
+                                                class="btn btn-sm btn-danger" 
                                                 onclick="showDeleteModal('<?= base_url('dashboard/pendaftaran/delete/' . $app['id']) ?>', 'Hapus pendaftaran \'<?= esc($app['nama_lengkap']) ?>\'?')" 
                                                 title="Hapus">
                                             <i class="fas fa-trash"></i>

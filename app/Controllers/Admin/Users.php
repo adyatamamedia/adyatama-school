@@ -88,15 +88,31 @@ class Users extends BaseController
 
     public function new()
     {
+        helper('auth');
+        $user = current_user();
+        
+        // Get all roles
+        $roles = $this->roleModel->findAll();
+        
+        // If operator, exclude admin role
+        if ($user->role === 'operator') {
+            $roles = array_filter($roles, function($role) {
+                return $role->name !== 'admin';
+            });
+        }
+        
         $data = [
             'title' => 'Create New User',
-            'roles' => $this->roleModel->findAll()
+            'roles' => $roles
         ];
         return view('admin/users/create', $data);
     }
 
     public function create()
     {
+        helper('auth');
+        $user = current_user();
+        
         $rules = [
             'username' => 'required|min_length[3]|max_length[100]|is_unique[users.username]',
             'email'    => 'permit_empty|valid_email',
@@ -107,6 +123,14 @@ class Users extends BaseController
 
         if (! $this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+        
+        // Check if operator trying to create admin
+        $roleId = $this->request->getPost('role_id');
+        $role = $this->roleModel->find($roleId);
+        
+        if ($user->role === 'operator' && $role && $role->name === 'admin') {
+            return redirect()->back()->withInput()->with('error', 'You do not have permission to create admin users.');
         }
 
         $data = [
@@ -154,21 +178,43 @@ class Users extends BaseController
         }
 
         $this->userModel->save($data);
+        
+        $userId = $this->userModel->getInsertID();
+        log_activity('create_user', 'user', $userId, ['username' => $data['username'], 'role' => $role->name ?? null]);
 
         return redirect()->to('/dashboard/users')->with('message', 'User created successfully.');
     }
 
     public function edit($id)
     {
+        helper('auth');
+        $currentUser = current_user();
+        
         $user = $this->userModel->find($id);
         if (! $user) {
             return redirect()->to('/dashboard/users')->with('error', 'User not found.');
+        }
+        
+        // Get all roles
+        $roles = $this->roleModel->findAll();
+        
+        // If operator, exclude admin role
+        if ($currentUser->role === 'operator') {
+            $roles = array_filter($roles, function($role) {
+                return $role->name !== 'admin';
+            });
+            
+            // Prevent operator from editing admin users
+            $userRole = $this->roleModel->find($user->role_id);
+            if ($userRole && $userRole->name === 'admin') {
+                return redirect()->to('/dashboard/users')->with('error', 'You do not have permission to edit admin users.');
+            }
         }
 
         $data = [
             'title' => 'Edit User',
             'user' => $user,
-            'roles' => $this->roleModel->findAll()
+            'roles' => $roles
         ];
 
         return view('admin/users/edit', $data);
@@ -176,9 +222,18 @@ class Users extends BaseController
 
     public function update($id)
     {
+        helper('auth');
+        $currentUser = current_user();
+        
         $user = $this->userModel->find($id);
         if (! $user) {
             return redirect()->to('/dashboard/users')->with('error', 'User not found.');
+        }
+        
+        // Check if operator trying to edit admin user
+        $userRole = $this->roleModel->find($user->role_id);
+        if ($currentUser->role === 'operator' && $userRole && $userRole->name === 'admin') {
+            return redirect()->to('/dashboard/users')->with('error', 'You do not have permission to edit admin users.');
         }
 
         $rules = [
@@ -189,6 +244,14 @@ class Users extends BaseController
 
         if (! $this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+        
+        // Check if operator trying to assign admin role
+        $newRoleId = $this->request->getPost('role_id');
+        $newRole = $this->roleModel->find($newRoleId);
+        
+        if ($currentUser->role === 'operator' && $newRole && $newRole->name === 'admin') {
+            return redirect()->back()->withInput()->with('error', 'You do not have permission to assign admin role.');
         }
 
         $data = [
@@ -255,45 +318,101 @@ class Users extends BaseController
         }
 
         $this->userModel->update($id, $data);
+        
+        log_activity('update_user', 'user', $id, ['username' => $data['username'], 'role' => $newRole->name ?? null]);
 
         return redirect()->to('/dashboard/users')->with('message', 'User updated successfully.');
     }
 
     public function delete($id)
     {
-        if (current_user()->id == $id) {
+        helper('auth');
+        $currentUser = current_user();
+        
+        if ($currentUser->id == $id) {
             return redirect()->to('/dashboard/users')->with('error', 'You cannot delete yourself.');
         }
         
+        // Check if operator trying to delete admin user
+        $user = $this->userModel->find($id);
+        if ($user) {
+            $userRole = $this->roleModel->find($user->role_id);
+            if ($currentUser->role === 'operator' && $userRole && $userRole->name === 'admin') {
+                return redirect()->to('/dashboard/users')->with('error', 'You do not have permission to delete admin users.');
+            }
+        }
+        
         $this->userModel->delete($id);
+        
+        log_activity('delete_user', 'user', $id, ['username' => $user->username ?? null]);
+        
         return redirect()->to('/dashboard/users')->with('message', 'User deleted successfully.');
+    }
+
+    public function deletePhoto($id)
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Invalid request']);
+        }
+
+        $user = $this->userModel->find($id);
+        if (!$user) {
+            return $this->response->setJSON(['success' => false, 'message' => 'User not found']);
+        }
+
+        if (!empty($user->photo) && file_exists(FCPATH . $user->photo)) {
+            @unlink(FCPATH . $user->photo);
+            
+            // Update database
+            $this->userModel->update($id, ['photo' => null]);
+            
+            return $this->response->setJSON(['success' => true, 'message' => 'Photo deleted successfully']);
+        }
+
+        return $this->response->setJSON(['success' => false, 'message' => 'No photo to delete']);
     }
 
     public function bulkDelete()
     {
+        helper('auth');
+        $currentUser = current_user();
+        
         $ids = $this->request->getPost('ids');
 
         if (!$ids || !is_array($ids)) {
             return redirect()->back()->with('error', 'No users selected.');
         }
 
-        $currentUserId = current_user()->id;
         $count = 0;
         $skipped = 0;
 
         foreach ($ids as $id) {
-            if ($id == $currentUserId) {
+            if ($id == $currentUser->id) {
                 $skipped++;
                 continue; // Skip current user
             }
+            
+            // Check if operator trying to delete admin
+            if ($currentUser->role === 'operator') {
+                $user = $this->userModel->find($id);
+                if ($user) {
+                    $userRole = $this->roleModel->find($user->role_id);
+                    if ($userRole && $userRole->name === 'admin') {
+                        $skipped++;
+                        continue; // Skip admin users for operator
+                    }
+                }
+            }
+            
             if ($this->userModel->delete($id)) {
+                log_activity('bulk_delete_user', 'user', $id);
                 $count++;
             }
         }
 
         $message = "$count user(s) deleted successfully.";
         if ($skipped > 0) {
-            $message .= " ($skipped skipped - cannot delete yourself)";
+            $message .= " ($skipped skipped)";
         }
 
         return redirect()->to('/dashboard/users')->with('message', $message);

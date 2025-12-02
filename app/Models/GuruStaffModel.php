@@ -25,7 +25,7 @@ class GuruStaffModel extends Model
     // Validation
     protected $validationRules      = [
         'nama_lengkap' => 'required|min_length[3]|max_length[150]',
-        'status'       => 'required|in_list[guru,staff]',
+        'status'       => 'required|in_list[guru,staff,kepala-sekolah,tenaga-administrasi,tenaga-perpustakaan,tenaga-laboratorium,tenaga-kebersihan,tenaga-keamanan,bendahara,operator]',
         'email'        => 'permit_empty|valid_email',
     ];
     protected $validationMessages   = [];

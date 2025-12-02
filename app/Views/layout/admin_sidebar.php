@@ -15,7 +15,7 @@
         <nav class="mt-2">
             <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
                 
-                <!-- DASHBOARD -->
+                <!-- DASHBOARD (All roles) -->
                 <li class="nav-item">
                     <a href="<?= base_url('dashboard') ?>" class="nav-link <?= nav_active('dashboard', 'exact') ?>">
                         <i class="nav-icon fas fa-th-large"></i>
@@ -23,15 +23,18 @@
                     </a>
                 </li>
 
-                <!-- MEDIA LIBRARY -->
+                <!-- MEDIA LIBRARY (Admin & Operator only) -->
+                <?php if (can_access_menu('media')): ?>
                 <li class="nav-item">
                     <a href="<?= base_url('dashboard/media') ?>" class="nav-link <?= nav_active('media') ?>">
                         <i class="nav-icon fas fa-photo-video"></i>
                         <p>Media Library</p>
                     </a>
                 </li>
+                <?php endif; ?>
 
-                <!-- MANAJEMEN TERMS (DROPDOWN) -->
+                <!-- MANAJEMEN TERMS (DROPDOWN) (Admin & Operator only) -->
+                <?php if (can_access_menu('categories')): ?>
                 <li class="nav-item <?= nav_menu_open(['categories', 'tags', 'extracurriculars']) ?>">
                     <a href="#" class="nav-link <?= nav_active(['categories', 'tags', 'extracurriculars']) ?>">
                         <i class="nav-icon fas fa-bookmark"></i>
@@ -61,8 +64,10 @@
                         </li>
                     </ul>
                 </li>
+                <?php endif; ?>
 
-                <!-- MANAJEMEN ARTIKEL (DROPDOWN) -->
+                <!-- MANAJEMEN ARTIKEL (DROPDOWN) (All roles) -->
+                <?php if (can_access_menu('posts')): ?>
                 <li class="nav-item <?= nav_menu_open('posts') ?>">
                     <a href="#" class="nav-link <?= nav_active('posts') ?>">
                         <i class="nav-icon fas fa-file-alt"></i>
@@ -86,8 +91,10 @@
                         </li>
                     </ul>
                 </li>
+                <?php endif; ?>
 
-                <!-- MANAJEMEN HALAMAN (DROPDOWN) -->
+                <!-- MANAJEMEN HALAMAN (DROPDOWN) (Admin & Operator only) -->
+                <?php if (can_access_menu('pages')): ?>
                 <li class="nav-item <?= nav_menu_open('pages') ?>">
                     <a href="#" class="nav-link <?= nav_active('pages') ?>">
                         <i class="nav-icon fas fa-file-invoice"></i>
@@ -111,8 +118,10 @@
                         </li>
                     </ul>
                 </li>
+                <?php endif; ?>
 
-                <!-- MANAJEMEN GALERI (DROPDOWN) -->
+                <!-- MANAJEMEN GALERI (DROPDOWN) (All roles) -->
+                <?php if (can_access_menu('galleries')): ?>
                 <li class="nav-item <?= nav_menu_open('galleries') ?>">
                     <a href="#" class="nav-link <?= nav_active('galleries') ?>">
                         <i class="nav-icon fas fa-images"></i>
@@ -136,16 +145,10 @@
                         </li>
                     </ul>
                 </li>
+                <?php endif; ?>
 
-                <!-- PENDAFTARAN -->
-                <li class="nav-item">
-                    <a href="<?= base_url('dashboard/pendaftaran') ?>" class="nav-link <?= nav_active('pendaftaran') ?>">
-                        <i class="nav-icon fas fa-user-graduate"></i>
-                        <p>Pendaftaran</p>
-                    </a>
-                </li>
-
-                <!-- MANAJEMEN GURU/STAFF (DROPDOWN) -->
+                <!-- MANAJEMEN GURU/STAFF (DROPDOWN) (Admin & Operator only) -->
+                <?php if (can_access_menu('guru-staff')): ?>
                 <li class="nav-item <?= nav_menu_open('guru-staff') ?>">
                     <a href="#" class="nav-link <?= nav_active('guru-staff') ?>">
                         <i class="nav-icon fas fa-user-tie"></i>
@@ -169,46 +172,67 @@
                         </li>
                     </ul>
                 </li>
+                <?php endif; ?>
 
-                <!-- KOMENTAR -->
+                <!-- PENDAFTARAN (Admin & Operator only) -->
+                <?php if (can_access_menu('pendaftaran')): ?>
+                <li class="nav-item">
+                    <a href="<?= base_url('dashboard/pendaftaran') ?>" class="nav-link <?= nav_active('pendaftaran') ?>">
+                        <i class="nav-icon fas fa-user-graduate"></i>
+                        <p>Pendaftaran</p>
+                    </a>
+                </li>
+                <?php endif; ?>
+
+                <!-- KOMENTAR (Admin & Operator only) -->
+                <?php if (can_access_menu('comments')): ?>
                 <li class="nav-item">
                     <a href="<?= base_url('dashboard/comments') ?>" class="nav-link <?= nav_active('comments') ?>">
                         <i class="nav-icon fas fa-comment-dots"></i>
                         <p>Komentar</p>
                     </a>
                 </li>
+                <?php endif; ?>
 
-                <!-- SUBSCRIBER -->
+                <!-- SUBSCRIBER (Admin & Operator only) -->
+                <?php if (can_access_menu('subscribers')): ?>
                 <li class="nav-item">
                     <a href="<?= base_url('dashboard/subscribers') ?>" class="nav-link <?= nav_active('subscribers') ?>">
                         <i class="nav-icon fas fa-envelope-open-text"></i>
                         <p>Subscriber</p>
                     </a>
                 </li>
+                <?php endif; ?>
 
-                <!-- PENGGUNA -->
+                <!-- PENGGUNA (Admin & Operator) -->
+                <?php if (in_array(current_user()->role, ['admin', 'operator'])): ?>
                 <li class="nav-item">
                     <a href="<?= base_url('dashboard/users') ?>" class="nav-link <?= nav_active('users') ?>">
                          <i class="nav-icon fas fa-users-cog"></i>
                          <p>Pengguna</p>
                     </a>
                 </li>
+                <?php endif; ?>
 
-                <!-- SETTINGS -->
+                <!-- SETTINGS (Admin & Operator only) -->
+                <?php if (can_access_menu('settings')): ?>
                 <li class="nav-item">
                     <a href="<?= base_url('dashboard/settings') ?>" class="nav-link <?= nav_active('settings') ?>">
                          <i class="nav-icon fas fa-sliders"></i>
                          <p>Settings</p>
                     </a>
                 </li>
+                <?php endif; ?>
 
-                <!-- ACTIVITY LOG -->
+                <!-- ACTIVITY LOG (Admin & Operator only) -->
+                <?php if (can_access_menu('activity-logs')): ?>
                 <li class="nav-item">
                     <a href="<?= base_url('dashboard/activity-logs') ?>" class="nav-link <?= nav_active('activity-logs') ?>">
                          <i class="nav-icon fas fa-clock"></i>
                          <p>Activity Log</p>
                     </a>
                 </li>
+                <?php endif; ?>
             </ul>
         </nav>
     </div>
