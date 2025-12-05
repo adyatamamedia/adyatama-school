@@ -33,6 +33,24 @@ if (! function_exists('current_user')) {
     }
 }
 
+if (! function_exists('nav_active')) {
+    /**
+     * Check if the current navigation item is active
+     */
+    function nav_active(...$pages): string
+    {
+        $currentRoute = service('request')->uri->getPath();
+        
+        foreach ($pages as $page) {
+            if ($currentRoute === $page || (is_array($page) && in_array($currentRoute, $page))) {
+                return 'active';
+            }
+        }
+        
+        return '';
+    }
+}
+
 if (! function_exists('user_can')) {
     /**
      * Checks if the current user has a specific permission.

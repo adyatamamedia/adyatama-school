@@ -18,11 +18,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/css/all.min.css" />
     <!-- AdminLTE 4 CSS -->
     <link href="<?= base_url('assets/vendor/adminlte/css/adminlte.min.css') ?>" rel="stylesheet">
+    <!-- Custom Sidebar CSS -->
+    <link rel="stylesheet" href="<?= base_url('css/admin_sidebar.css') ?>">
     <!-- Summernote CSS (Lite version for better BS5 compatibility) -->
     <link href="/assets/vendor/summernote/css/summernote-lite.min.css" rel="stylesheet">
 
-    <!-- jQuery - Load FIRST -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

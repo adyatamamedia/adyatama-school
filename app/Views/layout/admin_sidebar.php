@@ -1,6 +1,3 @@
-<!-- Custom Sidebar CSS -->
-<link rel="stylesheet" href="<?= base_url('css/admin_sidebar.css') ?>">
-
 <aside class="app-sidebar modern-sidebar shadow" data-bs-theme="dark">
     <!-- Sidebar Brand -->
     <div class="sidebar-brand">
@@ -233,10 +230,17 @@
                     </a>
                 </li>
                 <?php endif; ?>
+
+                <!-- SYSTEM UPDATE (Admin only) -->
+                <?php if (current_user()->role === 'admin'): ?>
+                <li class="nav-item">
+                    <a href="<?= base_url('dashboard/update') ?>" class="nav-link <?= nav_active('update') ?>">
+                        <i class="nav-icon fas fa-sync-alt"></i>
+                        <p>System Update</p>
+                    </a>
+                </li>
+                <?php endif; ?>
             </ul>
         </nav>
     </div>
 </aside>
-
-<!-- Custom Sidebar JS -->
-<script src="<?= base_url('js/admin_sidebar.js') ?>"></script>

@@ -18,6 +18,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/css/all.min.css" />
     <!-- AdminLTE 4 CSS -->
     <link href="<?= base_url('assets/vendor/adminlte/css/adminlte.min.css') ?>" rel="stylesheet">
+    <!-- Custom Sidebar CSS -->
+    <link rel="stylesheet" href="<?= base_url('css/admin_sidebar.css') ?>">
     <!-- Summernote CSS (Lite version for better BS5 compatibility) -->
     <link href="/assets/vendor/summernote/css/summernote-lite.min.css" rel="stylesheet">
 
@@ -128,6 +130,7 @@
             display: none;
         }
     </style>
+    
 </head>
 
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary sidebar-mini"> <!-- AdminLTE 4 Body Classes -->
@@ -172,57 +175,61 @@
         <!-- Footer -->
         <?= $this->include('layout/admin_footer') ?>
 
-        <!-- Required JavaScript Libraries -->
-        <!-- Bootstrap JS -->
-        <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-        <script>
-            if (typeof bootstrap !== 'undefined') {
-                console.log('Bootstrap JS loaded successfully');
-            } else {
-                console.error('Bootstrap JS failed to load!');
-            }
-        </script>
+    </div><!-- /.app-wrapper -->
 
-        <!-- AdminLTE JS -->
-        <script src="/assets/vendor/adminlte/js/adminlte.min.js"></script>
-        <script>
-            // AdminLTE 4 doesn't create global AdminLTE object, so we check differently
-            if (typeof bootstrap !== 'undefined' && jQuery) {
-                console.log('AdminLTE JS loaded successfully (detected via jQuery and Bootstrap)');
-                // Initialize AdminLTE if available
-                if (typeof $.AdminLTE === 'function') {
-                    $.AdminLTE.start();
-                    console.log('AdminLTE initialized');
-                }
-            } else {
-                console.warn('AdminLTE JS may not be fully loaded, but continuing...');
-            }
-        </script>
+    <!-- Required JavaScript Libraries -->
+    <!-- Bootstrap JS -->
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script>
+        if (typeof bootstrap !== 'undefined') {
+            console.log('Bootstrap JS loaded successfully');
+        } else {
+            console.error('Bootstrap JS failed to load!');
+        }
+    </script>
 
-        <!-- Summernote JS (Lite version) -->
-        <script src="/assets/vendor/summernote/js/summernote-lite.min.js"></script>
-        <script>
-            if (typeof $.fn.summernote !== 'undefined') {
-                console.log('Summernote Lite JS loaded successfully');
-            } else {
-                console.error('Summernote Lite JS failed to load!');
-                // Try CDN fallback for Lite version
-                console.log('Trying CDN fallback...');
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js';
-                script.onload = function() {
-                    console.log('Summernote Lite CDN loaded successfully');
-                    // Reinitialize Summernote if needed
-                    setTimeout(initializeSummernote, 500);
-                };
-                script.onerror = function() {
-                    console.error('CDN fallback also failed!');
-                };
-                document.head.appendChild(script);
+    <!-- AdminLTE JS -->
+    <script src="/assets/vendor/adminlte/js/adminlte.min.js"></script>
+    <script>
+        // AdminLTE 4 doesn't create global AdminLTE object, so we check differently
+        if (typeof bootstrap !== 'undefined' && jQuery) {
+            console.log('AdminLTE JS loaded successfully (detected via jQuery and Bootstrap)');
+            // Initialize AdminLTE if available
+            if (typeof $.AdminLTE === 'function') {
+                $.AdminLTE.start();
+                console.log('AdminLTE initialized');
             }
-        </script>
+        } else {
+            console.warn('AdminLTE JS may not be fully loaded, but continuing...');
+        }
+    </script>
 
-    </div>
+    <!-- Custom Sidebar JS -->
+    <script src="<?= base_url('js/admin_sidebar.js') ?>"></script>
+    
+    <!-- Summernote JS (Lite version) -->
+    <script src="/assets/vendor/summernote/js/summernote-lite.min.js"></script>
+    <script>
+        if (typeof $.fn.summernote !== 'undefined') {
+            console.log('Summernote Lite JS loaded successfully');
+        } else {
+            console.error('Summernote Lite JS failed to load!');
+            // Try CDN fallback for Lite version
+            console.log('Trying CDN fallback...');
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js';
+            script.onload = function() {
+                console.log('Summernote Lite CDN loaded successfully');
+                // Reinitialize Summernote if needed
+                setTimeout(initializeSummernote, 500);
+            };
+            script.onerror = function() {
+                console.error('CDN fallback also failed!');
+            };
+            document.head.appendChild(script);
+        }
+    </script>
+
 </body>
 
 </html>

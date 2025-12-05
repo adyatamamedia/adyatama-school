@@ -145,6 +145,19 @@ $routes->group('dashboard', ['filter' => ['auth', 'role'], 'namespace' => 'App\C
     $routes->get('tags/delete/(:segment)', 'Tags::delete/$1');
     $routes->post('tags/bulk-delete', 'Tags::bulkDelete');
 
+    // Update Notifications Routes
+    $routes->get('notifications', 'UpdateNotifications::index');
+    $routes->get('notifications/unread-count', 'UpdateNotifications::getUnreadCount');
+    $routes->post('notifications/mark-read/(:num)', 'UpdateNotifications::markAsRead/$1');
+    $routes->post('notifications/mark-all-read', 'UpdateNotifications::markAllAsRead');
+    $routes->post('notifications/add', 'UpdateNotifications::addNotification');
+    $routes->get('notifications/delete/(:num)', 'UpdateNotifications::deleteNotification/$1');
+
+    // Update Management Routes
+    $routes->get('update', 'UpdateController::index');
+    $routes->get('api/check-updates', 'UpdateController::checkUpdates');
+    $routes->get('api/download-update/(:any)', 'UpdateController::downloadUpdate/$1');
+
     // User Management (Admin Only)
     $routes->group('users', ['filter' => 'admin'], function ($routes) {
         $routes->get('/', 'Users::index');
