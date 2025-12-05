@@ -266,43 +266,59 @@
                                                 <?php elseif ($setting->key_name == 'academic_calendar_url') : ?>
                                                     <small class="form-text text-muted">Upload kalender akademik dalam format PDF</small>
                                                 <?php endif; ?>
-                                            <?php elseif ($setting->type == 'image') : ?>
+                                            <?php elseif ($setting->type == 'media') : ?>
                                                 <?php if (!empty($setting->value)) : ?>
-                                                    <div class="mb-2">
-                                                        <?php if (strpos($setting->key_name, 'favicon') !== false) : ?>
-                                                            <img src="<?= base_url($setting->value) ?>" alt="<?= $setting->key_name ?>" style="max-height: 32px; border: 1px solid #ddd;">
-                                                        <?php elseif (strpos($setting->key_name, 'logo') !== false) : ?>
-                                                            <img src="<?= base_url($setting->value) ?>" alt="<?= $setting->key_name ?>" class="img-thumbnail" style="max-height: 80px;">
-                                                        <?php elseif (strpos($setting->key_name, 'og_image') !== false) : ?>
-                                                            <img src="<?= base_url($setting->value) ?>" alt="<?= $setting->key_name ?>" class="img-thumbnail" style="max-height: 150px;">
-                                                        <?php elseif (strpos($setting->key_name, 'hero_bg_image') !== false) : ?>
-                                                            <img src="<?= base_url($setting->value) ?>" alt="<?= $setting->key_name ?>" class="img-thumbnail" style="max-height: 150px;">
-                                                        <?php else : ?>
-                                                            <img src="<?= base_url($setting->value) ?>" alt="<?= $setting->key_name ?>" class="img-thumbnail" style="max-height: 150px;">
+                                                    <div class="mb-2" id="preview_<?= $setting->key_name ?>">
+                                                        <?php 
+                                                        // Try to get media info from path
+                                                        $mediaPath = $setting->value;
+                                                        $isVideo = preg_match('/\.(mp4|webm|mov|avi|mkv)$/i', $mediaPath);
+                                                        ?>
+                                                        <?php if ($isVideo): ?>
+                                                            <div class="position-relative d-inline-block">
+                                                                <div class="d-flex flex-column align-items-center justify-content-center rounded text-white" style="width: 150px; height: 150px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                                                    <i class="fas fa-video fa-3x mb-2"></i>
+                                                                    <span class="badge bg-dark bg-opacity-75">VIDEO</span>
+                                                                </div>
+                                                            </div>
+                                                        <?php else: ?>
+                                                            <?php if (strpos($setting->key_name, 'favicon') !== false) : ?>
+                                                                <img src="<?= base_url($mediaPath) ?>" alt="<?= $setting->key_name ?>" style="max-height: 32px; border: 1px solid #ddd;">
+                                                            <?php elseif (strpos($setting->key_name, 'logo') !== false) : ?>
+                                                                <img src="<?= base_url($mediaPath) ?>" alt="<?= $setting->key_name ?>" class="img-thumbnail" style="max-height: 80px;">
+                                                            <?php elseif (strpos($setting->key_name, 'og_image') !== false) : ?>
+                                                                <img src="<?= base_url($mediaPath) ?>" alt="<?= $setting->key_name ?>" class="img-thumbnail" style="max-height: 150px;">
+                                                            <?php elseif (strpos($setting->key_name, 'hero_bg_image') !== false) : ?>
+                                                                <img src="<?= base_url($mediaPath) ?>" alt="<?= $setting->key_name ?>" class="img-thumbnail" style="max-height: 150px;">
+                                                            <?php else : ?>
+                                                                <img src="<?= base_url($mediaPath) ?>" alt="<?= $setting->key_name ?>" class="img-thumbnail" style="max-height: 150px;">
+                                                            <?php endif; ?>
                                                         <?php endif; ?>
                                                         <div class="mt-2">
-                                                            <a href="<?= base_url('dashboard/settings/delete-image/' . $setting->id) ?>"
-                                                                class="btn btn-sm btn-danger"
-                                                                onclick="return confirm('Are you sure you want to delete this image?')">
-                                                                <i class="fas fa-trash"></i> Delete Image
-                                                            </a>
+                                                            <button type="button" class="btn btn-sm btn-danger" onclick="removeSettingMedia('<?= $setting->key_name ?>')">
+                                                                <i class="fas fa-trash"></i> Remove Media
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 <?php endif; ?>
-                                                <input type="file" class="form-control" name="<?= $setting->key_name ?>" accept="image/*" id="<?= $setting->key_name ?>">
-                                                <div class="mt-1">
-                                                    <small class="text-info">
-                                                        <?php if (strpos($setting->key_name, 'favicon') !== false) : ?>
-                                                            Supported formats: ICO, PNG. Size: 32x32px recommended.
-                                                        <?php elseif (strpos($setting->key_name, 'og_image') !== false) : ?>
-                                                            Supported formats: JPG, PNG. Size: 1200x630px recommended.
-                                                        <?php elseif (strpos($setting->key_name, 'hero_bg_image') !== false) : ?>
-                                                            Supported formats: JPG, PNG, WebP. Size: 1920x1080px recommended.
-                                                        <?php else : ?>
-                                                            Supported formats: JPG, PNG, GIF, WebP. Max size: 5MB.
-                                                        <?php endif; ?>
-                                                    </small>
+                                                <div class="input-group">
+                                                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#mediaModal" onclick="setCurrentMediaInput('<?= $setting->key_name ?>')">
+                                                        <i class="fas fa-image"></i> Select from Media Library
+                                                    </button>
+                                                    <input type="text" class="form-control" id="<?= $setting->key_name ?>_display" readonly placeholder="No media selected" value="<?= esc($setting->value) ?>">
+                                                    <input type="hidden" id="<?= $setting->key_name ?>" name="<?= $setting->key_name ?>" value="<?= esc($setting->value) ?>">
                                                 </div>
+                                                <small class="form-text text-muted">
+                                                    <?php if (strpos($setting->key_name, 'favicon') !== false) : ?>
+                                                        Recommended: ICO, PNG. Size: 32x32px.
+                                                    <?php elseif (strpos($setting->key_name, 'og_image') !== false) : ?>
+                                                        Recommended: JPG, PNG. Size: 1200x630px.
+                                                    <?php elseif (strpos($setting->key_name, 'hero_bg_image') !== false) : ?>
+                                                        Recommended: JPG, PNG, WebP. Size: 1920x1080px.
+                                                    <?php else : ?>
+                                                        Select image or video from media library.
+                                                    <?php endif; ?>
+                                                </small>
                                             <?php else : ?>
                                                 <input type="text" class="form-control" name="<?= $setting->key_name ?>" value="<?= esc($setting->value) ?>" placeholder="<?= $setting->description ?>">
                                                 <?php if ($setting->key_name == 'hero_title') : ?>
@@ -419,5 +435,135 @@
         </div>
     </div>
 </div>
+
+<!-- Media Selection Modal -->
+<?= $this->include('admin/partials/media_modal_script') ?>
+
+<script>
+// Track which setting field is currently being edited
+let currentMediaInputKey = null;
+
+function setCurrentMediaInput(keyName) {
+    currentMediaInputKey = keyName;
+    console.log('Current media input set to:', keyName);
+}
+
+// Override the selectMediaForInput function for settings
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        window.selectMediaForInput = function(path, id) {
+            console.log('Settings media selector - path:', path, 'id:', id, 'current key:', currentMediaInputKey);
+            
+            if (!currentMediaInputKey) {
+                console.error('No current media input key set!');
+                return;
+            }
+            
+            // Update hidden input (stores path)
+            const hiddenInput = document.getElementById(currentMediaInputKey);
+            if (hiddenInput) {
+                hiddenInput.value = path;
+            }
+            
+            // Update display input
+            const displayInput = document.getElementById(currentMediaInputKey + '_display');
+            if (displayInput) {
+                displayInput.value = path;
+            }
+            
+            // Update preview
+            showSettingMediaPreview(currentMediaInputKey, path);
+            
+            // Close modal
+            const modalEl = document.getElementById('mediaModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+            
+            // Reset current key
+            currentMediaInputKey = null;
+        };
+        console.log('Settings media selector override set');
+    }, 100);
+});
+
+function showSettingMediaPreview(keyName, path) {
+    console.log('Showing preview for:', keyName, 'path:', path);
+    
+    const previewDiv = document.getElementById('preview_' + keyName);
+    if (!previewDiv) {
+        console.log('Creating new preview div for', keyName);
+        // Create preview div if doesn't exist
+        const container = document.getElementById(keyName + '_display').parentElement.parentElement;
+        const newPreviewDiv = document.createElement('div');
+        newPreviewDiv.id = 'preview_' + keyName;
+        newPreviewDiv.className = 'mb-2';
+        container.insertBefore(newPreviewDiv, container.firstChild);
+        showSettingMediaPreview(keyName, path); // Recurse with new div
+        return;
+    }
+    
+    // Check if media is video
+    const isVideo = /\.(mp4|webm|mov|avi|mkv)$/i.test(path);
+    
+    if (isVideo) {
+        previewDiv.innerHTML = `
+            <div class="position-relative d-inline-block">
+                <div class="d-flex flex-column align-items-center justify-content-center rounded text-white" style="width: 150px; height: 150px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <i class="fas fa-video fa-3x mb-2"></i>
+                    <span class="badge bg-dark bg-opacity-75">VIDEO</span>
+                </div>
+            </div>
+            <div class="mt-2">
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeSettingMedia('${keyName}')">
+                    <i class="fas fa-trash"></i> Remove Media
+                </button>
+            </div>
+        `;
+    } else {
+        const fullUrl = path.startsWith('http') ? path : '<?= base_url() ?>' + (path.startsWith('/') ? path : '/' + path);
+        
+        // Determine size based on key name
+        let maxHeight = '150px';
+        if (keyName.includes('favicon')) maxHeight = '32px';
+        else if (keyName.includes('logo')) maxHeight = '80px';
+        
+        previewDiv.innerHTML = `
+            <img src="${fullUrl}" alt="${keyName}" class="img-thumbnail" style="max-height: ${maxHeight};">
+            <div class="mt-2">
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeSettingMedia('${keyName}')">
+                    <i class="fas fa-trash"></i> Remove Media
+                </button>
+            </div>
+        `;
+    }
+    
+    previewDiv.style.display = 'block';
+}
+
+function removeSettingMedia(keyName) {
+    if (!confirm('Are you sure you want to remove this media?')) {
+        return;
+    }
+    
+    // Clear hidden input
+    const hiddenInput = document.getElementById(keyName);
+    if (hiddenInput) {
+        hiddenInput.value = '';
+    }
+    
+    // Clear display input
+    const displayInput = document.getElementById(keyName + '_display');
+    if (displayInput) {
+        displayInput.value = '';
+    }
+    
+    // Hide preview
+    const previewDiv = document.getElementById('preview_' + keyName);
+    if (previewDiv) {
+        previewDiv.style.display = 'none';
+        previewDiv.innerHTML = '';
+    }
+}
+</script>
 
 <?= $this->endSection() ?>

@@ -67,6 +67,7 @@ class GuruStaff extends BaseController
                 'newest' => 'Terbaru',
                 'oldest' => 'Terlama'
             ],
+            'enableTrash' => true,
             'enableBulkActions' => true,
             'bulkActions' => [
                 ['action' => 'delete', 'label' => 'Hapus', 'icon' => 'trash', 'variant' => 'danger', 'confirm' => 'Hapus guru/staff terpilih?']
@@ -207,6 +208,103 @@ class GuruStaff extends BaseController
         }
 
         return redirect()->to('/dashboard/guru-staff')->with('message', $count . ' guru/staff deleted successfully.');
+    }
+
+    public function trash()
+    {
+        // Get query parameters
+        $perPage = $this->request->getGet('per_page') ?? 25;
+        $search = $this->request->getGet('search') ?? '';
+        
+        // Build query for deleted items
+        $builder = $this->guruStaffModel->onlyDeleted();
+        
+        // Apply search
+        if ($search) {
+            $builder->groupStart()
+                ->like('nama_lengkap', $search)
+                ->orLike('posisi', $search)
+                ->orLike('email', $search)
+                ->groupEnd();
+        }
+        
+        $builder->orderBy('deleted_at', 'DESC');
+        
+        $data = [
+            'title' => 'Trash - Guru/Staff',
+            'staff' => $builder->paginate($perPage, 'default'),
+            'pager' => $builder->pager,
+            'perPage' => $perPage,
+            'search' => $search,
+            'enableTrash' => true,
+            'enableBulkActions' => true,
+            'bulkActions' => [
+                ['action' => 'restore', 'label' => 'Restore', 'icon' => 'trash-restore', 'variant' => 'success', 'confirm' => 'Restore guru/staff terpilih?'],
+                ['action' => 'force-delete', 'label' => 'Delete Permanently', 'icon' => 'ban', 'variant' => 'danger', 'confirm' => 'Hapus permanen? Tidak bisa dikembalikan!']
+            ]
+        ];
+
+        return view('admin/guru_staff/trash', $data);
+    }
+
+    public function restore($id)
+    {
+        // Restore specific staff member
+        $staff = $this->guruStaffModel->onlyDeleted()->find($id);
+        if (!$staff) {
+            return redirect()->to('/dashboard/guru-staff/trash')->with('error', 'Guru/Staff not found in trash.');
+        }
+
+        helper('auth');
+        $db = \Config\Database::connect();
+        $db->table('guru_staff')->where('id', $id)->update(['deleted_at' => null]);
+        
+        log_activity('restore_guru_staff', 'guru_staff', $id, ['nama' => $staff->nama_lengkap ?? null]);
+        return redirect()->to('/dashboard/guru-staff/trash')->with('message', 'Guru/Staff restored successfully.');
+    }
+
+    public function bulkRestore()
+    {
+        $ids = $this->request->getPost('ids');
+        if (!$ids || !is_array($ids)) {
+            return redirect()->back()->with('error', 'No guru/staff selected.');
+        }
+
+        $db = \Config\Database::connect();
+        $count = 0;
+        foreach ($ids as $id) {
+            $db->table('guru_staff')->where('id', $id)->update(['deleted_at' => null]);
+            log_activity('bulk_restore_guru_staff', 'guru_staff', $id);
+            $count++;
+        }
+
+        return redirect()->to('/dashboard/guru-staff/trash')->with('message', "$count guru/staff(s) restored.");
+    }
+
+    public function bulkForceDelete()
+    {
+        $ids = $this->request->getPost('ids');
+        if (!$ids || !is_array($ids)) {
+            return redirect()->back()->with('error', 'No guru/staff selected.');
+        }
+
+        $count = 0;
+        foreach ($ids as $id) {
+            $staff = $this->guruStaffModel->onlyDeleted()->find($id);
+            if ($staff) {
+                // Delete profile photo if exists
+                if ($staff->foto && file_exists(FCPATH . $staff->foto)) {
+                    @unlink(FCPATH . $staff->foto);
+                }
+                
+                // Permanently delete database record
+                $this->guruStaffModel->delete($id, true); // True for purge/force delete
+                log_activity('bulk_force_delete_guru_staff', 'guru_staff', $id);
+                $count++;
+            }
+        }
+
+        return redirect()->to('/dashboard/guru-staff/trash')->with('message', "$count guru/staff(s) permanently deleted.");
     }
 }
 

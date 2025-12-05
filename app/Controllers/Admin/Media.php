@@ -65,17 +65,23 @@ class Media extends BaseController
             return redirect()->back()->with('error', 'No file uploaded or upload error occurred.');
         }
         
-        // Manual size check (10MB before compression)
-        if ($file->getSize() > 10240 * 1024) {
-            return redirect()->back()->with('error', 'File too large. Max size is 10MB.');
-        }
-
-        // Check extension (string based, no IO)
-        $ext = $file->getClientExtension();
-        $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        // Check extension first to determine type
+        $ext = strtolower($file->getClientExtension());
+        $allowedImageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $allowedVideoExts = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'mpeg', 'mpg'];
         
-        if (!in_array(strtolower($ext), $allowedExts)) {
-            return redirect()->back()->with('error', 'Invalid file extension. Only JPG, PNG, GIF, and WEBP are allowed.');
+        $isImage = in_array($ext, $allowedImageExts);
+        $isVideo = in_array($ext, $allowedVideoExts);
+        
+        if (!$isImage && !$isVideo) {
+            return redirect()->back()->with('error', 'Invalid file extension. Allowed: Images (JPG, PNG, GIF, WEBP) or Videos (MP4, WEBM, MOV, AVI, MKV, FLV, WMV, MPEG, MPG).');
+        }
+        
+        // Size check - 10MB for images, 100MB for videos
+        $maxSize = $isImage ? (10240 * 1024) : (102400 * 1024); // 10MB or 100MB
+        if ($file->getSize() > $maxSize) {
+            $maxSizeStr = $isImage ? '10MB' : '100MB';
+            return redirect()->back()->with('error', "File too large. Max size is {$maxSizeStr}.");
         }
 
         try {
@@ -87,38 +93,64 @@ class Media extends BaseController
             }
 
             $filePath = FCPATH . 'uploads/' . $newName;
-            
-            // Validate real image type AFTER move using GD (safer than finfo on temp files)
-            $imgInfo = @getimagesize($filePath);
-            if (!$imgInfo) {
-                @unlink($filePath);
-                return redirect()->back()->with('error', 'Uploaded file is not a valid image.');
-            }
-            
-            $validMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            if (!in_array($imgInfo['mime'], $validMimes)) {
-                @unlink($filePath);
-                return redirect()->back()->with('error', 'Invalid image mime type detected: ' . $imgInfo['mime']);
-            }
-
-            // Compress image if it's larger than 500KB
-            $originalSize = filesize($filePath);
-            $compressed = $this->compressImage($filePath, 500); // 500KB target
-            
-            // Get final file size after compression
             $finalSize = filesize($filePath);
+            $mimeType = $file->getClientMimeType();
             
-            // Log compression result (for debugging)
-            log_message('info', "Image compression: Original={$originalSize} bytes, Final={$finalSize} bytes, Compressed=" . ($compressed ? 'yes' : 'no'));
+            // Handle Image Files
+            if ($isImage) {
+                // Validate real image type AFTER move using GD (safer than finfo on temp files)
+                $imgInfo = @getimagesize($filePath);
+                if (!$imgInfo) {
+                    @unlink($filePath);
+                    return redirect()->back()->with('error', 'Uploaded file is not a valid image.');
+                }
+                
+                $validMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                if (!in_array($imgInfo['mime'], $validMimes)) {
+                    @unlink($filePath);
+                    return redirect()->back()->with('error', 'Invalid image mime type detected: ' . $imgInfo['mime']);
+                }
+
+                // Compress image if it's larger than 500KB
+                $originalSize = filesize($filePath);
+                $compressed = $this->compressImage($filePath, 500); // 500KB target
+                
+                // Get final file size after compression
+                $finalSize = filesize($filePath);
+                $mimeType = $imgInfo['mime'];
+                
+                // Log compression result (for debugging)
+                log_message('info', "Image compression: Original={$originalSize} bytes, Final={$finalSize} bytes, Compressed=" . ($compressed ? 'yes' : 'no'));
+            }
+            // Handle Video Files
+            elseif ($isVideo) {
+                // Basic mime validation for video
+                $validVideoMimes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/x-flv', 'video/x-ms-wmv', 'video/mpeg'];
+                
+                // Get real mime type using finfo
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $realMime = finfo_file($finfo, $filePath);
+                finfo_close($finfo);
+                
+                // Allow if starts with video/
+                if (strpos($realMime, 'video/') !== 0) {
+                    @unlink($filePath);
+                    return redirect()->back()->with('error', 'Invalid video file. Detected mime: ' . $realMime);
+                }
+                
+                $mimeType = $realMime;
+                
+                log_message('info', "Video upload: Filename={$file->getClientName()}, Size={$finalSize} bytes, Mime={$mimeType}");
+            }
 
             $data = [
-                'type' => 'image',
+                'type' => $isImage ? 'image' : 'video',
                 'path' => 'uploads/' . $newName,
                 'caption' => $this->request->getPost('caption') ?: $file->getClientName(),
                 'filesize' => $finalSize,
                 'meta' => json_encode([
                     'client_name' => $file->getClientName(),
-                    'mime_type' => $imgInfo['mime'],
+                    'mime_type' => $mimeType,
                 ]),
             ];
 
@@ -285,18 +317,24 @@ class Media extends BaseController
                 continue;
             }
 
-            // Check file size (10MB max)
-            if ($file->getSize() > 10240 * 1024) {
-                $errors[] = $file->getClientName() . ' too large (max 10MB)';
+            // Check extension first
+            $ext = strtolower($file->getClientExtension());
+            $allowedImageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $allowedVideoExts = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'mpeg', 'mpg'];
+            
+            $isImage = in_array($ext, $allowedImageExts);
+            $isVideo = in_array($ext, $allowedVideoExts);
+            
+            if (!$isImage && !$isVideo) {
+                $errors[] = $file->getClientName() . ' invalid extension';
                 continue;
             }
 
-            // Check extension
-            $ext = $file->getClientExtension();
-            $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-            
-            if (!in_array(strtolower($ext), $allowedExts)) {
-                $errors[] = $file->getClientName() . ' invalid extension';
+            // Check file size - 10MB for images, 100MB for videos
+            $maxSize = $isImage ? (10240 * 1024) : (102400 * 1024);
+            if ($file->getSize() > $maxSize) {
+                $maxSizeStr = $isImage ? '10MB' : '100MB';
+                $errors[] = $file->getClientName() . " too large (max {$maxSizeStr})";
                 continue;
             }
 
@@ -309,38 +347,60 @@ class Media extends BaseController
                 }
 
                 $filePath = FCPATH . 'uploads/' . $newName;
-                
-                // Validate image
-                $imgInfo = @getimagesize($filePath);
-                if (!$imgInfo) {
-                    @unlink($filePath);
-                    $errors[] = $file->getClientName() . ' not valid image';
-                    continue;
-                }
-                
-                $validMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-                if (!in_array($imgInfo['mime'], $validMimes)) {
-                    @unlink($filePath);
-                    $errors[] = $file->getClientName() . ' invalid mime type';
-                    continue;
-                }
-
-                // Compress image
-                $originalSize = filesize($filePath);
-                $this->compressImage($filePath, 500);
                 $finalSize = filesize($filePath);
+                $mimeType = $file->getClientMimeType();
                 
-                log_message('info', "Image compression: {$file->getClientName()} Original={$originalSize} bytes, Final={$finalSize} bytes");
+                // Handle Image Files
+                if ($isImage) {
+                    // Validate image
+                    $imgInfo = @getimagesize($filePath);
+                    if (!$imgInfo) {
+                        @unlink($filePath);
+                        $errors[] = $file->getClientName() . ' not valid image';
+                        continue;
+                    }
+                    
+                    $validMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                    if (!in_array($imgInfo['mime'], $validMimes)) {
+                        @unlink($filePath);
+                        $errors[] = $file->getClientName() . ' invalid mime type';
+                        continue;
+                    }
+
+                    // Compress image
+                    $originalSize = filesize($filePath);
+                    $this->compressImage($filePath, 500);
+                    $finalSize = filesize($filePath);
+                    $mimeType = $imgInfo['mime'];
+                    
+                    log_message('info', "Image compression: {$file->getClientName()} Original={$originalSize} bytes, Final={$finalSize} bytes");
+                }
+                // Handle Video Files
+                elseif ($isVideo) {
+                    // Get real mime type
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                    $realMime = finfo_file($finfo, $filePath);
+                    finfo_close($finfo);
+                    
+                    if (strpos($realMime, 'video/') !== 0) {
+                        @unlink($filePath);
+                        $errors[] = $file->getClientName() . ' invalid video mime';
+                        continue;
+                    }
+                    
+                    $mimeType = $realMime;
+                    log_message('info', "Video upload: {$file->getClientName()} Size={$finalSize} bytes, Mime={$mimeType}");
+                }
 
                 // Save to database
                 $data = [
-                    'type' => 'image',
+                    'type' => $isImage ? 'image' : 'video',
                     'path' => 'uploads/' . $newName,
                     'caption' => $file->getClientName(),
                     'filesize' => $finalSize,
                     'meta' => json_encode([
                         'client_name' => $file->getClientName(),
-                        'mime_type' => $imgInfo['mime'],
+                        'mime_type' => $mimeType,
                     ]),
                 ];
 
@@ -436,6 +496,109 @@ class Media extends BaseController
     {
         $media = $this->mediaModel->orderBy('created_at', 'DESC')->findAll();
         return $this->response->setJSON($media);
+    }
+
+    public function trash()
+    {
+        // Get query parameters
+        $perPage = $this->request->getGet('per_page') ?? 25;
+        $search = $this->request->getGet('search') ?? '';
+        
+        // Build query for deleted items
+        $builder = $this->mediaModel->onlyDeleted();
+        
+        // Apply search
+        if ($search) {
+            $builder->groupStart()
+                ->like('caption', $search)
+                ->orLike('path', $search)
+                ->groupEnd();
+        }
+        
+        $builder->orderBy('deleted_at', 'DESC');
+        
+        $data = [
+            'title' => 'Trash - Media Library',
+            'media' => $builder->paginate($perPage, 'default'),
+            'pager' => $builder->pager,
+            'perPage' => $perPage,
+            'search' => $search,
+            'enableBulkActions' => true,
+            'bulkActions' => [
+                ['action' => 'restore', 'label' => 'Restore', 'icon' => 'trash-restore', 'variant' => 'success', 'confirm' => 'Restore media terpilih?'],
+                ['action' => 'force-delete', 'label' => 'Delete Permanently', 'icon' => 'ban', 'variant' => 'danger', 'confirm' => 'Hapus permanen? Tidak bisa dikembalikan!']
+            ]
+        ];
+
+        return view('admin/media/trash', $data);
+    }
+
+    public function restore($id)
+    {
+        // Restore specific media item
+        $media = $this->mediaModel->onlyDeleted()->find($id);
+        if (!$media) {
+            return redirect()->to('/dashboard/media/trash')->with('error', 'Media not found in trash.');
+        }
+
+        helper('auth');
+        $db = \Config\Database::connect();
+        $db->table('media')->where('id', $id)->update(['deleted_at' => null]);
+        
+        log_activity('restore_media', 'media', $id, ['caption' => $media->caption ?? null]);
+        return redirect()->to('/dashboard/media/trash')->with('message', 'Media restored successfully.');
+    }
+
+    public function bulkRestore()
+    {
+        $ids = $this->request->getPost('ids');
+        if (!$ids || !is_array($ids)) {
+            return redirect()->back()->with('error', 'No media selected.');
+        }
+
+        $db = \Config\Database::connect();
+        $count = 0;
+        foreach ($ids as $id) {
+            $db->table('media')->where('id', $id)->update(['deleted_at' => null]);
+            log_activity('bulk_restore_media', 'media', $id);
+            $count++;
+        }
+
+        return redirect()->to('/dashboard/media/trash')->with('message', "$count media(s) restored.");
+    }
+
+    public function bulkForceDelete()
+    {
+        helper('auth');
+        $currentUser = current_user();
+        
+        // Prevent guru from permanently deleting media
+        if ($currentUser->role === 'guru') {
+            return redirect()->back()->with('error', 'You do not have permission to permanently delete media.');
+        }
+        
+        $ids = $this->request->getPost('ids');
+        if (!$ids || !is_array($ids)) {
+            return redirect()->back()->with('error', 'No media selected.');
+        }
+
+        $count = 0;
+        foreach ($ids as $id) {
+            $media = $this->mediaModel->onlyDeleted()->find($id);
+            if ($media) {
+                // Delete physical file
+                if (file_exists(FCPATH . $media->path)) {
+                    @unlink(FCPATH . $media->path);
+                }
+                
+                // Permanently delete database record
+                $this->mediaModel->delete($id, true); // True for purge/force delete
+                log_activity('bulk_force_delete_media', 'media', $id);
+                $count++;
+            }
+        }
+
+        return redirect()->to('/dashboard/media/trash')->with('message', "$count media(s) permanently deleted.");
     }
 
     /**

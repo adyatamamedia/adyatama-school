@@ -95,17 +95,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         filteredData.forEach((item, index) => {
-            console.log('Rendering item', index, ':', item.path, 'id:', item.id);
+            console.log('Rendering item', index, ':', item.path, 'id:', item.id, 'type:', item.type);
             const col = document.createElement('div');
             col.className = 'col';
-            col.innerHTML = `
-                <div class="card h-100 media-item" style="cursor: pointer;" data-path="${item.path}" data-id="${item.id}">
-                    <img src="<?= base_url() ?>${item.path}" class="card-img-top" style="height: 100px; object-fit: cover;">
-                    <div class="card-body p-1 text-center">
-                        <small class="text-truncate d-block">${item.caption}</small>
+            
+            // Check if item is video
+            const isVideo = item.type === 'video' || /\.(mp4|webm|mov|avi|mkv|flv|wmv|mpeg|mpg)$/i.test(item.path);
+            
+            if (isVideo) {
+                // Render video icon instead of loading video
+                col.innerHTML = `
+                    <div class="card h-100 media-item" style="cursor: pointer;" data-path="${item.path}" data-id="${item.id}" data-type="video">
+                        <div class="d-flex flex-column align-items-center justify-content-center text-white" style="height: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <i class="fas fa-video fa-2x mb-1"></i>
+                            <span class="badge bg-dark bg-opacity-75" style="font-size: 0.55rem;">VIDEO</span>
+                        </div>
+                        <div class="card-body p-1 text-center">
+                            <small class="text-truncate d-block">${item.caption}</small>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            } else {
+                // Render image thumbnail
+                col.innerHTML = `
+                    <div class="card h-100 media-item" style="cursor: pointer;" data-path="${item.path}" data-id="${item.id}" data-type="image">
+                        <img src="<?= base_url() ?>${item.path}" class="card-img-top" style="height: 100px; object-fit: cover;">
+                        <div class="card-body p-1 text-center">
+                            <small class="text-truncate d-block">${item.caption}</small>
+                        </div>
+                    </div>
+                `;
+            }
             
             // Add click event listener
             const cardEl = col.querySelector('.media-item');

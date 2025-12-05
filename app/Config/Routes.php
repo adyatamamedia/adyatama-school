@@ -55,6 +55,11 @@ $routes->group('dashboard', ['filter' => ['auth', 'role'], 'namespace' => 'App\C
     $routes->post('media/edit-image/(:num)', 'Media::editImage/$1');
     $routes->get('media/delete/(:num)', 'Media::delete/$1');
     $routes->get('api/media', 'Media::getMediaJson');
+    // Media Trash Routes
+    $routes->get('media/trash', 'Media::trash');
+    $routes->get('media/restore/(:num)', 'Media::restore/$1');
+    $routes->post('media/bulk-restore', 'Media::bulkRestore');
+    $routes->post('media/bulk-force-delete', 'Media::bulkForceDelete');
 
     // Summernote Upload Routes
     $routes->post('summernote/upload', 'SummernoteUpload::upload');
@@ -67,6 +72,11 @@ $routes->group('dashboard', ['filter' => ['auth', 'role'], 'namespace' => 'App\C
     $routes->post('guru-staff/update/(:num)', 'GuruStaff::update/$1');
     $routes->get('guru-staff/delete/(:num)', 'GuruStaff::delete/$1');
     $routes->post('guru-staff/bulk-delete', 'GuruStaff::bulkDelete');
+    // Guru/Staff Trash Routes
+    $routes->get('guru-staff/trash', 'GuruStaff::trash');
+    $routes->get('guru-staff/restore/(:num)', 'GuruStaff::restore/$1');
+    $routes->post('guru-staff/bulk-restore', 'GuruStaff::bulkRestore');
+    $routes->post('guru-staff/bulk-force-delete', 'GuruStaff::bulkForceDelete');
 
     // Extracurriculars Routes
     $routes->get('extracurriculars', 'Extracurriculars::index');
@@ -93,6 +103,11 @@ $routes->group('dashboard', ['filter' => ['auth', 'role'], 'namespace' => 'App\C
     $routes->post('pages/bulk-delete', 'Pages::bulkDelete');
     $routes->post('pages/bulk-draft', 'Pages::bulkDraft');
     $routes->post('pages/bulk-publish', 'Pages::bulkPublish');
+    // Pages Trash Routes
+    $routes->get('pages/trash', 'Pages::trash');
+    $routes->get('pages/restore/(:num)', 'Pages::restore/$1');
+    $routes->post('pages/bulk-restore', 'Pages::bulkRestore');
+    $routes->post('pages/bulk-force-delete', 'Pages::bulkForceDelete');
     // Galleries Routes
     $routes->get('galleries', 'Galleries::index');
     $routes->get('galleries/new', 'Galleries::new');
@@ -105,6 +120,10 @@ $routes->group('dashboard', ['filter' => ['auth', 'role'], 'namespace' => 'App\C
     $routes->get('galleries/items/(:num)', 'Galleries::items/$1');
     $routes->post('galleries/items/add/(:num)', 'Galleries::addItem/$1');
     $routes->get('galleries/items/delete/(:num)', 'Galleries::deleteItem/$1');
+    $routes->get('galleries/trash', 'Galleries::trash');
+    $routes->get('galleries/restore/(:num)', 'Galleries::restore/$1');
+    $routes->post('galleries/bulk-restore', 'Galleries::bulkRestore');
+    $routes->post('galleries/bulk-force-delete', 'Galleries::bulkForceDelete');
 
     // Student Applications (Pendaftaran) Routes
     $routes->get('pendaftaran', 'StudentApplications::index');
@@ -115,6 +134,11 @@ $routes->group('dashboard', ['filter' => ['auth', 'role'], 'namespace' => 'App\C
     $routes->post('pendaftaran/bulk-approve', 'StudentApplications::bulkApprove');
     $routes->get('pendaftaran/export-excel', 'StudentApplications::exportExcel');
     $routes->get('pendaftaran/export-doc/(:num)', 'StudentApplications::exportDoc/$1');
+    // Student Applications Trash Routes
+    $routes->get('pendaftaran/trash', 'StudentApplications::trash');
+    $routes->get('pendaftaran/restore/(:num)', 'StudentApplications::restore/$1');
+    $routes->post('pendaftaran/bulk-restore', 'StudentApplications::bulkRestore');
+    $routes->post('pendaftaran/bulk-force-delete', 'StudentApplications::bulkForceDelete');
 
     // Tags Routes (General View)
     $routes->get('tags', 'Tags::index');
@@ -131,6 +155,12 @@ $routes->group('dashboard', ['filter' => ['auth', 'role'], 'namespace' => 'App\C
         $routes->post('delete-photo/(:num)', 'Users::deletePhoto/$1');
         $routes->get('delete/(:num)', 'Users::delete/$1');
         $routes->post('bulk-delete', 'Users::bulkDelete');
+    
+    // Users Trash Routes
+    $routes->get('trash', 'Users::trash');
+    $routes->get('restore/(:num)', 'Users::restore/$1');
+    $routes->post('bulk-restore', 'Users::bulkRestore');
+    $routes->post('bulk-force-delete', 'Users::bulkForceDelete');
     });
 
     // Settings Routes

@@ -29,6 +29,10 @@ class Users extends BaseController
             ->select('users.*, roles.name as role_name')
             ->join('roles', 'roles.id = users.role_id', 'left');
         
+        // Apply filters
+        $filterStatus = $this->request->getGet('filter_status') ?? '';
+        $filterRole = $this->request->getGet('filter_role') ?? '';
+        
         // Apply search
         if ($search) {
             $builder->groupStart()
@@ -37,6 +41,16 @@ class Users extends BaseController
                 ->orLike('users.username', $search)
                 ->orLike('roles.name', $search)
                 ->groupEnd();
+        }
+        
+        // Apply status filter
+        if ($filterStatus) {
+            $builder->where('users.status', $filterStatus);
+        }
+        
+        // Apply role filter
+        if ($filterRole) {
+            $builder->where('roles.name', $filterRole);
         }
         
         // Apply sorting
@@ -66,6 +80,8 @@ class Users extends BaseController
             'perPage' => $perPage,
             'sortBy' => $sortBy,
             'search' => $search,
+            'filterStatus' => $filterStatus,
+            'filterRole' => $filterRole,
             'sortOptions' => [
                 'newest' => 'Terbaru',
                 'oldest' => 'Terlama',
@@ -73,6 +89,7 @@ class Users extends BaseController
                 'name_desc' => 'Nama Z-A',
                 'role' => 'Role'
             ],
+            'enableTrash' => true,
             'enableBulkActions' => true,
             'bulkActions' => [
                 ['action' => 'delete', 'label' => 'Hapus', 'icon' => 'trash', 'variant' => 'danger', 'confirm' => 'Hapus user terpilih?']
@@ -80,6 +97,17 @@ class Users extends BaseController
             'createButton' => [
                 'url' => base_url('dashboard/users/new'),
                 'label' => 'Buat User'
+            ],
+            'statusOptions' => [
+                '' => 'Semua Status',
+                'active' => 'Aktif',
+                'inactive' => 'Tidak Aktif'
+            ],
+            'roleOptions' => [
+                '' => 'Semua Role',
+                'admin' => 'Admin',
+                'operator' => 'Operator',
+                'guru' => 'Guru'
             ]
         ];
 
@@ -416,5 +444,113 @@ class Users extends BaseController
         }
 
         return redirect()->to('/dashboard/users')->with('message', $message);
+    }
+
+    public function trash()
+    {
+        // Get query parameters
+        $perPage = $this->request->getGet('per_page') ?? 25;
+        $search = $this->request->getGet('search') ?? '';
+        
+        // Build query for deleted items
+        $builder = $this->userModel->onlyDeleted()
+            ->select('users.*, roles.name as role_name')
+            ->join('roles', 'roles.id = users.role_id', 'left');
+        
+        // Apply search
+        if ($search) {
+            $builder->groupStart()
+                ->like('users.fullname', $search)
+                ->orLike('users.email', $search)
+                ->orLike('users.username', $search)
+                ->orLike('roles.name', $search)
+                ->groupEnd();
+        }
+        
+        $builder->orderBy('users.deleted_at', 'DESC');
+        
+        $data = [
+            'title' => 'Trash - Pengguna',
+            'users' => $builder->paginate($perPage, 'default'),
+            'pager' => $builder->pager,
+            'perPage' => $perPage,
+            'search' => $search,
+            'enableTrash' => true,
+            'enableBulkActions' => true,
+            'bulkActions' => [
+                ['action' => 'restore', 'label' => 'Restore', 'icon' => 'trash-restore', 'variant' => 'success', 'confirm' => 'Restore pengguna terpilih?'],
+                ['action' => 'force-delete', 'label' => 'Delete Permanently', 'icon' => 'ban', 'variant' => 'danger', 'confirm' => 'Hapus permanen? Tidak bisa dikembalikan!']
+            ]
+        ];
+
+        return view('admin/users/trash', $data);
+    }
+
+    public function restore($id)
+    {
+        // Restore specific user
+        $user = $this->userModel->onlyDeleted()->find($id);
+        if (!$user) {
+            return redirect()->to('/dashboard/users/trash')->with('error', 'User not found in trash.');
+        }
+
+        helper('auth');
+        $db = \Config\Database::connect();
+        $db->table('users')->where('id', $id)->update(['deleted_at' => null]);
+        
+        log_activity('restore_user', 'user', $id, ['fullname' => $user->fullname ?? null]);
+        return redirect()->to('/dashboard/users/trash')->with('message', 'User restored successfully.');
+    }
+
+    public function bulkRestore()
+    {
+        $ids = $this->request->getPost('ids');
+        if (!$ids || !is_array($ids)) {
+            return redirect()->back()->with('error', 'No users selected.');
+        }
+
+        $db = \Config\Database::connect();
+        $count = 0;
+        foreach ($ids as $id) {
+            $db->table('users')->where('id', $id)->update(['deleted_at' => null]);
+            log_activity('bulk_restore_user', 'user', $id);
+            $count++;
+        }
+
+        return redirect()->to('/dashboard/users/trash')->with('message', "$count user(s) restored.");
+    }
+
+    public function bulkForceDelete()
+    {
+        helper('auth');
+        $currentUser = current_user();
+        
+        // Prevent operator from permanently deleting users
+        if ($currentUser->role === 'operator') {
+            return redirect()->back()->with('error', 'You do not have permission to permanently delete users.');
+        }
+        
+        $ids = $this->request->getPost('ids');
+        if (!$ids || !is_array($ids)) {
+            return redirect()->back()->with('error', 'No users selected.');
+        }
+
+        $count = 0;
+        foreach ($ids as $id) {
+            $user = $this->userModel->onlyDeleted()->find($id);
+            if ($user) {
+                // Delete profile photo if exists
+                if ($user->photo && file_exists(FCPATH . 'uploads/' . $user->photo)) {
+                    @unlink(FCPATH . 'uploads/' . $user->photo);
+                }
+                
+                // Permanently delete database record
+                $this->userModel->delete($id, true); // True for purge/force delete
+                log_activity('bulk_force_delete_user', 'user', $id);
+                $count++;
+            }
+        }
+
+        return redirect()->to('/dashboard/users/trash')->with('message', "$count user(s) permanently deleted.");
     }
 }

@@ -8,6 +8,10 @@ class StudentApplicationModel extends Model
 {
     protected $table = 'student_applications';
     protected $primaryKey = 'id';
+    protected $useAutoIncrement = true;
+    protected $returnType = 'array';
+    protected $useSoftDeletes = true;
+    protected $protectFields = true;
     protected $allowedFields = [
         'nama_lengkap', 'nisn', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir',
         'alamat', 'nama_ortu', 'no_hp', 'email', 'asal_sekolah',
@@ -16,5 +20,5 @@ class StudentApplicationModel extends Model
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';
-    protected $returnType = 'array';
+    protected $deletedField = 'deleted_at';
 }

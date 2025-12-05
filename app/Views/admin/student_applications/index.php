@@ -66,6 +66,11 @@
            class="btn btn-success btn-sm me-2">
             <i class="fas fa-file-excel"></i> Excel
         </a>
+        
+        <!-- Trash Button -->
+        <a href="<?= base_url('dashboard/pendaftaran/trash') ?>" class="btn btn-warning btn-sm me-2">
+            <i class="fas fa-trash"></i> Trash
+        </a>
     </div>
 </div>
 

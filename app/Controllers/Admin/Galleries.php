@@ -93,6 +93,7 @@ class Galleries extends BaseController
             ],
             'ekskuls' => $this->extracurricularModel->findAll(),
             'selectedEkskul' => $extracurricularId,
+            'enableTrash' => true,
             'enableBulkActions' => true,
             'bulkActions' => [
                 ['action' => 'delete', 'label' => 'Hapus', 'icon' => 'trash', 'variant' => 'danger', 'confirm' => 'Hapus galeri terpilih?']
@@ -390,5 +391,117 @@ class Galleries extends BaseController
     {
         $this->galleryItemModel->delete($itemId);
         return redirect()->back()->with('message', 'Item removed.');
+    }
+
+    public function trash()
+    {
+        // Get query parameters
+        $perPage = $this->request->getGet('per_page') ?? 25;
+        $search = $this->request->getGet('search') ?? '';
+        $extracurricularId = $this->request->getGet('extracurricular');
+        
+        // Build query for deleted items
+        $builder = $this->galleryModel->onlyDeleted()
+            ->select('galleries.*, extracurriculars.name as ekskul_name, users.fullname as author_name')
+            ->join('extracurriculars', 'extracurriculars.id = galleries.extracurricular_id', 'left')
+            ->join('users', 'users.id = galleries.author_id', 'left');
+        
+        // Restrict 'guru' to only see their own galleries
+        if (current_user()->role == 'guru') {
+            $builder->where('galleries.author_id', current_user()->id);
+        }
+
+        // Apply filters
+        if (!empty($extracurricularId)) {
+            $builder->where('galleries.extracurricular_id', $extracurricularId);
+        }
+
+        // Apply search
+        if ($search) {
+            $builder->groupStart()
+                ->like('galleries.title', $search)
+                ->orLike('galleries.description', $search)
+                ->orLike('galleries.slug', $search)
+                ->groupEnd();
+        }
+        
+        $builder->orderBy('galleries.deleted_at', 'DESC');
+        
+        $data = [
+            'title' => 'Trash - Galleries',
+            'galleries' => $builder->paginate($perPage, 'default'),
+            'pager' => $builder->pager,
+            'perPage' => $perPage,
+            'search' => $search,
+            'extracurriculars' => $this->extracurricularModel->findAll(),
+            'enableTrash' => true,
+            'enableBulkActions' => true,
+            'bulkActions' => [
+                ['action' => 'restore', 'label' => 'Restore', 'icon' => 'trash-restore', 'variant' => 'success', 'confirm' => 'Restore galeri terpilih?'],
+                ['action' => 'force-delete', 'label' => 'Delete Permanently', 'icon' => 'ban', 'variant' => 'danger', 'confirm' => 'Hapus permanen? Tidak bisa dikembalikan!']
+            ]
+        ];
+
+        return view('admin/galleries/trash', $data);
+    }
+
+    public function restore($id)
+    {
+        // Restore specific gallery
+        $gallery = $this->galleryModel->onlyDeleted()->find($id);
+        if (!$gallery) {
+            return redirect()->to('/dashboard/galleries/trash')->with('error', 'Gallery not found in trash.');
+        }
+
+        helper('auth');
+        $db = \Config\Database::connect();
+        $db->table('galleries')->where('id', $id)->update(['deleted_at' => null]);
+        
+        log_activity('restore_gallery', 'gallery', $id, ['title' => $gallery->title ?? null]);
+        return redirect()->to('/dashboard/galleries/trash')->with('message', 'Gallery restored successfully.');
+    }
+
+    public function bulkRestore()
+    {
+        $ids = $this->request->getPost('ids');
+        if (!$ids || !is_array($ids)) {
+            return redirect()->back()->with('error', 'No galleries selected.');
+        }
+
+        $db = \Config\Database::connect();
+        $count = 0;
+        foreach ($ids as $id) {
+            $db->table('galleries')->where('id', $id)->update(['deleted_at' => null]);
+            log_activity('bulk_restore_gallery', 'gallery', $id);
+            $count++;
+        }
+
+        return redirect()->to('/dashboard/galleries/trash')->with('message', "$count gallery(s) restored.");
+    }
+
+    public function bulkForceDelete()
+    {
+        $ids = $this->request->getPost('ids');
+        if (!$ids || !is_array($ids)) {
+            return redirect()->back()->with('error', 'No galleries selected.');
+        }
+
+        $count = 0;
+        foreach ($ids as $id) {
+            $gallery = $this->galleryModel->onlyDeleted()->find($id);
+            if ($gallery) {
+                // Delete featured image if exists
+                if ($gallery->featured_img && file_exists(FCPATH . $gallery->featured_img)) {
+                    @unlink(FCPATH . $gallery->featured_img);
+                }
+                
+                // Permanently delete database record
+                $this->galleryModel->delete($id, true); // True for purge/force delete
+                log_activity('bulk_force_delete_gallery', 'gallery', $id);
+                $count++;
+            }
+        }
+
+        return redirect()->to('/dashboard/galleries/trash')->with('message', "$count gallery(s) permanently deleted.");
     }
 }

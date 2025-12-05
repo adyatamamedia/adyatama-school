@@ -66,6 +66,7 @@ class Pages extends BaseController
                 'title_asc' => 'Judul A-Z',
                 'title_desc' => 'Judul Z-A'
             ],
+            'enableTrash' => true,
             'enableBulkActions' => true,
             'bulkActions' => [
                 ['action' => 'delete', 'label' => 'Hapus', 'icon' => 'trash', 'variant' => 'danger', 'confirm' => 'Hapus halaman terpilih?'],
@@ -294,5 +295,92 @@ class Pages extends BaseController
         }
 
         return redirect()->to('/dashboard/pages')->with('message', "$count page(s) published.");
+    }
+
+    public function trash()
+    {
+        // Get query parameters
+        $perPage = $this->request->getGet('per_page') ?? 25;
+        $search = $this->request->getGet('search') ?? '';
+        
+        // Build query for deleted items
+        $builder = $this->pageModel->onlyDeleted();
+        
+        // Apply search
+        if ($search) {
+            $builder->groupStart()
+                ->like('title', $search)
+                ->orLike('content', $search)
+                ->orLike('slug', $search)
+                ->groupEnd();
+        }
+        
+        $builder->orderBy('deleted_at', 'DESC');
+        
+        $data = [
+            'title' => 'Trash - Static Pages',
+            'pages' => $builder->paginate($perPage, 'default'),
+            'pager' => $builder->pager,
+            'perPage' => $perPage,
+            'search' => $search,
+            'enableBulkActions' => true,
+            'bulkActions' => [
+                ['action' => 'restore', 'label' => 'Restore', 'icon' => 'trash-restore', 'variant' => 'success', 'confirm' => 'Restore halaman terpilih?'],
+                ['action' => 'force-delete', 'label' => 'Delete Permanently', 'icon' => 'ban', 'variant' => 'danger', 'confirm' => 'Hapus permanen? Tidak bisa dikembalikan!']
+            ]
+        ];
+
+        return view('admin/pages/trash', $data);
+    }
+
+    public function restore($id)
+    {
+        // Restore specific page
+        $page = $this->pageModel->onlyDeleted()->find($id);
+        if (!$page) {
+            return redirect()->to('/dashboard/pages/trash')->with('error', 'Page not found in trash.');
+        }
+
+        helper('auth');
+        $db = \Config\Database::connect();
+        $db->table('pages')->where('id', $id)->update(['deleted_at' => null]);
+        
+        log_activity('restore_page', 'page', $id, ['title' => $page->title ?? null]);
+        return redirect()->to('/dashboard/pages/trash')->with('message', 'Page restored successfully.');
+    }
+
+    public function bulkRestore()
+    {
+        $ids = $this->request->getPost('ids');
+        if (!$ids || !is_array($ids)) {
+            return redirect()->back()->with('error', 'No pages selected.');
+        }
+
+        $db = \Config\Database::connect();
+        $count = 0;
+        foreach ($ids as $id) {
+            $db->table('pages')->where('id', $id)->update(['deleted_at' => null]);
+            log_activity('bulk_restore_page', 'page', $id);
+            $count++;
+        }
+
+        return redirect()->to('/dashboard/pages/trash')->with('message', "$count page(s) restored.");
+    }
+
+    public function bulkForceDelete()
+    {
+        $ids = $this->request->getPost('ids');
+        if (!$ids || !is_array($ids)) {
+            return redirect()->back()->with('error', 'No pages selected.');
+        }
+
+        $count = 0;
+        foreach ($ids as $id) {
+            $this->pageModel->delete($id, true); // True for purge/force delete
+            log_activity('bulk_force_delete_page', 'page', $id);
+            $count++;
+        }
+
+        return redirect()->to('/dashboard/pages/trash')->with('message', "$count page(s) permanently deleted.");
     }
 }
